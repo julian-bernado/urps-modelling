@@ -1,2 +1,0 @@
-docker build --build-arg user=uniqname -f urps25_Dockerfile -t urps25_uniqname .
-docker run -d -p 8787:8787 -e PASSWORD=tea --name urps25_uniqname urps25_uniqname
