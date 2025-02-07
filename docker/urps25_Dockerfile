@@ -1,8 +1,6 @@
 FROM rocker/rstudio:4.3.1
 
-RUN mkdir -m 777 /home/rstudio/urps25
-RUN mkdir -m 777 /home/rstudio/urps25/data
 RUN . /etc/environment && R -e "install.packages(c('lme4', 'haven', 'tidyverse'))"
-RUN chown -HR 1000:1000 /home/rstudio/urps25
+RUN chown -HR 1000:1000 /home/rstudio
 
 CMD ["/init"]
