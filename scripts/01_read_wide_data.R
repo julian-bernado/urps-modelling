@@ -1,51 +1,72 @@
-# 
-set.seed(439)
+# This file should take in the 
+set.seed(2025)
 library(readr)
 library(dplyr)
 library(haven)
-library(R.utils)
-source("helpers.R")
 
 # These are the variables we're going to extract
-covariates <- c("studentid_state",
-                "schoolid_nces_enroll",
-                "gradelevel",
+
+# First, let's select the variables that don't have a lagged version or older versions
+covariates <- c("replacement_id",
                 "acadyear",
-                "glmath_scr",
-                "glmath_ver",
-                "readng_scr",
-                "readng_ver",
+                "enrfay_school",
+                "enrfay_district",
+                "enrfay_state",
+                "gradelevel",
+                "age",
                 "gender",
-                "lep",
-                "specialed",
                 "raceth")
 
+# Now, the variables that have a _now, _2yr, _3yr, _5yr, _ever, _elem, _midd, _high suffix
+history_covariate_stems <- c("frl",
+                        "lep",
+                        "rfep",
+                        "migrant",
+                        "homeless",
+                        "specialed")
+
+history_covariates <- c()
+
+for(suffix in c("_now", "_2yr", "_3yr", "_5yr", "_ever", "_elem", "_midd", "_high")){
+  history_covariates <- c(history_covariates, history_covariate_stems + suffix)
+}
+
+# Now the variables that have a _p0 or _m1 suffix
+lagged_covariate_stems <- c("attend",
+                       "gpacum",
+                       "dropout_inferred",
+                       "withdrawal_date",
+                       "persist_inferred",
+                       "transferred_out",
+                       "chronic_absentee",
+                       "glmath_scr",
+                       "glmath_ver",
+                       "glmath_scr",
+                       "glmath_lan",
+                       "glmath_alt_scr",
+                       "readng_scr",
+                       "readng_ver",
+                       "readng_scr",
+                       "readng_lan",
+                       "readng_alt_scr",
+                       "districtid_nces_enroll",
+                       "schoolid_nces_enroll")
+
+lagged_covariates <- c()
+
+for(suffix in c("_p0", "_m1")){
+  lagged_covariates <- c(lagged_covariates, lagged_covariate_stems + suffix)
+}
+
+columns_to_pull <- c(covariates, history_covariates, lagged_covariates)
 
 # Now we read in the data
-wide_data <- read_dta("../../tea/data/current/TX2022_LNG_UMICH.dta", col_select = all_of(columns_to_pull), n_max = num_rows) 
-
-# Once we've read in the data, we want to subset the data such that records should exist for this year, those who are in the specific grade, and we'll remove the grade level column for redundancy
-wide_data <- wide_data %>%
-  filter(get(paste("acadyear", year_of_interest, sep = "_")) == 1) %>%
-  filter(get(paste("gradelevel", year_of_interest, sep = "_")) == paste0("0", grade_of_interest)) %>% 
-  select(-all_of(c(paste("gradelevel", year_of_interest, sep = "_")))) %>%
-  select(-all_of(c(paste("acadyear", year_of_interest, sep = "_"))))
+wide_data <- read_dta("../../tea/data/current/TX2019_DRV_UMICH.dta", col_select = all_of(columns_to_pull), n_max = num_rows) %>%
+  filter(gradelevel %in% 3:8)
 
 # Order the data by school and student
 wide_data <- wide_data %>%
-  arrange(schoolid_nces_enroll, studentid_state)
-
-# We add in the average demographics for a school as a student-level covariate (does not include school, student id, or test scores)
-# Additionally, we subtract the average covariate value within a school from each observation
-wide_data <- add_col_avgs(wide_data, covars_to_avg, grouping = "schoolid_nces_enroll")
-
-# Output a .CSV corresponding to the (year, grade, subject) combination
-
-# Prepare output file name and directory
-output_directory <- "../data/"
-file_prefix <- paste(year_of_interest, grade_of_interest, subject, sep = "_")
-base_name <- "regression_ready.csv"
-output_file_name <- paste(file_prefix, base_name, sep = "_")
+  arrange(schoolid_nces_enroll_p0, replacement_id)
 
 # Write file
-write_csv(subject_data, paste0(output_directory, output_file_name))
+write_csv(wide_data, "TEA_2019.csv")
