@@ -7,7 +7,7 @@ library(readr)
 
 # add nrow argument 
 # read_csv readr (tidy) 
-df <- read_csv("../../tea/bernado/TEA_2019.csv", nmax = 100)
+df <- read_csv("../../tea/bernado/TEA_2019.csv", n_max = 100)
 
 
 #save png file
