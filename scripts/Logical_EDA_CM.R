@@ -16,7 +16,8 @@ df <- read_csv("../../tea/bernado/TEA_2019.csv", n_max = 100)
 
 #colSums(is.na(df))
 
-data.frame(colSums(is.na(df))) %>% 
-  mutate(total_na = colSums.df.) %>% 
-  select(total_na) %>% 
-  arrange(desc(total_na))
+data.frame(colSums(is.na(df))) 
+
+#  mutate(total_na = colSums.df.) %>% 
+ # select(total_na) %>% 
+  #arrange(desc(total_na))
