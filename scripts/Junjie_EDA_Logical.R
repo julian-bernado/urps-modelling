@@ -1,5 +1,4 @@
 data <- read.csv("../../tea/bernado/TEA_2019.csv")
-data <- read.csv("/Users/junjiezeng/Desktop/Fall2024/STATS 500/Datasets/Titanic copy.csv")
 library(dplyr)
 
 ## Data
