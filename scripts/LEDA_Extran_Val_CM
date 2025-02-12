@@ -1,9 +1,0 @@
-# Exploring Extraneous Values 
-
-library(dplyr)
-library(readr)
-library(tidyverse)
-
-# add nrow argument 
-# read_csv readr (tidy) 
-df <- read_csv("../../tea/bernado/TEA_2019.csv", n_max = 100)
