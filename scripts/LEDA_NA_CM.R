@@ -32,5 +32,5 @@ na_df %>%
   geom_histogram(aes(x = total_na))
 ggsave("na.pdf")
 
-na_df %>% 
-  group_by('(.*)(?=_$)')
+# Need to review regex
+#na_df %>% group_by('(.*)(?=_$)')
