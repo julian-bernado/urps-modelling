@@ -25,7 +25,7 @@ na_df %>%
   arrange(desc(total_na))
 
 na_df %>% 
-  filter(total_na == 0)
+  dplyr::filter(total_na == 0)
 
 na_df %>% 
   ggplot() +
