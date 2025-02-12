@@ -1,0 +1,25 @@
+---
+title: "URPS_JunjieZeng_EDA_Logical"
+author: "Junjie Zeng"
+date: "2025-02-11"
+output: pdf_document 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+``` 
+
+```{r} 
+data <- read.csv("../../tea/bernado/TEA_2019.csv")
+library(dplyr)
+``` 
+## Data
+We check data for each predictor variable. 
+```{r}
+summary_df <- data.frame(
+  missing_values = colSums(is.na(data)),
+  num_uni_value = sapply(data, function(x) length(unique(x))),
+  uni_value = paste(lapply(data, unique), sep =",")
+)
+print(summary_df)
+```
