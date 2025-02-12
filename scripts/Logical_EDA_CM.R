@@ -29,7 +29,8 @@ na_df %>%
 
 na_df %>% 
   ggplot() +
-  geom_histogram(total_na)
+  geom_histogram(aes(x = total_na))
+ggsave("na.pdf")
 
 na_df %>% 
   group_by('(.*)(?=_$)')
