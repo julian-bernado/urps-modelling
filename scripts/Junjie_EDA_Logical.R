@@ -8,7 +8,6 @@ data <- read_csv("../../tea/bernado/TEA_2019.csv", n_max = 1000)
 summary_df <- data.frame(
   missing_values = colSums(is.na(data)),
   num_uni_value = sapply(data, function(x) length(unique(x))),
-  uni_value = paste(lapply(data, unique), sep =",")
 )
 summary_df <- summary_df |> 
   arrange(missing_values)
