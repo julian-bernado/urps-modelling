@@ -4,8 +4,13 @@
 
 library(dplyr)
 
+# add nrow argument 
+# read_csv readr (tidy) 
 df <- read.csv("../../tea/bernado/TEA_2019.csv")
 
 
-df %>% 
-  head()
+#save png file
+# comit and push that 
+
+
+colSums(is.na(df))
