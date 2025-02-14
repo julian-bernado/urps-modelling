@@ -20,26 +20,22 @@ df %>%
 
 # Counting Unique School and district 
 # School
-df %>% 
-  select(schoolid_nces_assess_p0) %>% 
-  unique()
-
-#District
-df %>% 
-  select(districtid_nces_assess_p0) %>% 
-  unique(districtid_nces_assess_p0)
-
-# District with most schools 
-df %>% 
-  group_by(districtid_nces_assess_p0) %>% 
-  summarize(n_schools = unique(schoolid_nces_assess_p0)) %>% 
-  arrange(desc(n_schools)) %>% 
-  head(6)
-
-# District with the most students 
-df %>% 
-  arrange(desc(districtid_nces_enroll_p0)) %>% 
-  head(6)
+# df %>% select(schoolid_nces_assess_p0) %>% unique()
+# 
+# #District
+# df %>% select(districtid_nces_assess_p0) %>% unique(districtid_nces_assess_p0)
+# 
+# # District with most schools 
+# df %>% 
+#   group_by(districtid_nces_assess_p0) %>% 
+#   summarize(n_schools = unique(schoolid_nces_assess_p0)) %>% 
+#   arrange(desc(n_schools)) %>% 
+#   head(6)
+# 
+# # District with the most students 
+# df %>% 
+#   arrange(desc(districtid_nces_enroll_p0)) %>% 
+#   head(6)
 
 
 
