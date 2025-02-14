@@ -32,4 +32,10 @@ na_df %>%
   geom_histogram(aes(x = total_na))
 ggsave("na.pdf")
 
-# Next is to group by variables that have the base variable (before the _m0 or _p1)
+df %>% 
+  select(starts_with("homeless_")) %>% 
+  sapply(any(is.na()))
+
+df %>% 
+  select(starts_with("homeless_")) %>% 
+  sapply(all(is.na()))

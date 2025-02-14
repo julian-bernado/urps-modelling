@@ -13,3 +13,5 @@ df %>%
   select_if(is.numeric) %>% 
   sapply(MARGIN = 2, summary) 
 
+  
+
