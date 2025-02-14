@@ -8,7 +8,7 @@ library(tidyverse)
 # read_csv readr (tidy) 
 df <- read_csv("../../tea/bernado/TEA_2019.csv")
 
-colnames(df)
+str(df)
 
 # Structure of the Data
 

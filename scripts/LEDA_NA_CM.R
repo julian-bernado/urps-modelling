@@ -6,6 +6,8 @@ library(tidyverse)
 
 df <- read_csv("../../tea/bernado/TEA_2019.csv")
 
+str(df)
+
 na_df = data.frame(colSums(is.na(df))) %>% 
   mutate(total_na = colSums.is.na.df..) %>% 
   select(total_na) 
