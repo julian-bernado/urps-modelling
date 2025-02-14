@@ -33,14 +33,51 @@ df1 <- df1 |>
 
 print(df1)
 
-###
 #enrfay_school 7 should be 2
-#enrfay_district
-#enrfay_state
+#enrfay_district 7
+#enrfay_state 7
 #gradelevel 6
-#gpacum
-#trasferred should 4
+#raceth 6 
+uni_list <- c("enrfay_school", 
+              "enrfay_district", 
+              "enrfay_state", 
+              "gradelevel", 
+              "raceth")
 
+uni_values <- lapply(data[, uni_list], unique)
+print(uni_values)
 
+# 5 num summary
 # glmath_scr_m1, glmath_scr_p0, glmath_alt_scr_m1, glmath_alt_scr_p0
 # readng_scr_m1, readng_scr_p0, readng_alt_scr_m1, readng_alt_scr_p0
+summary_vars <- c("glmath_scr_m1", 
+                  "glmath_scr_p0", 
+                  "glmath_alt_scr_m1",
+                  "glmath_alt_scr_p0",
+                  "readng_scr_m1",
+                  "readng_scr_p0",
+                  "readng_alt_scr_m1",
+                  "readng_alt_scr_p0")
+summary_stats <- data %>%
+  select(summary_vars)
+  summarise(across(summary_vars, ~ quantile(., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)))
+
+print(summary_stats)
+
+### TO-DO
+### Five-num summary of above variables
+summary_stats <- data %>%
+  summarise(across(all_of(summary_vars), 
+                   ~ quantile(., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE))) %>%
+  t() %>%
+  as.data.frame() %>%
+  setNames(c("Min", "Q1", "Median", "Q3", "Max")) %>%  # Rename columns
+  rownames_to_column(var = "Variable")  # Add variable names as a column
+
+print(summary_stats)
+
+
+#outlier_counts <- data %>%
+#  summarise(across(where(is.numeric), ~ sum(. < (quantile(., 0.25, na.rm = TRUE) - 1.5 * IQR(.)) | 
+#                                              . > (quantile(., 0.75, na.rm = TRUE) + 1.5 * IQR(.)), na.rm = TRUE)))
+#print(outlier_counts)
