@@ -8,6 +8,8 @@ library(tidyverse)
 # read_csv readr (tidy) 
 df <- read_csv("../../tea/bernado/TEA_2019.csv")
 
+# replace ID 
+
 str(df)
 
 # Searching for extraneous values 
@@ -19,7 +21,7 @@ df %>%
 # Structure of the Data
 
 # Counting Unique School and district 
-# School
+# School USE ENROLL INSTEAD it'll have the year id but just see what district they were in enrolled in 
 # df %>% select(schoolid_nces_assess_p0) %>% unique()
 # 
 # #District
