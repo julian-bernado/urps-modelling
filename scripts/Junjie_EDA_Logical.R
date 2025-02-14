@@ -61,9 +61,10 @@ print(df1)
 df2 <- df1 |> 
   filter(num_missing != 2506956)
 
+n_vars_df2 = nrow(df2) 
 print("Variables with all missing values removed: ")
 print(df2)
-
+cat("Number of variables left: ", n_vars_df2, "\n")
 ###############################################################################
 
 # 5 num summary
@@ -90,9 +91,7 @@ print(summary_stats)
 
 ###############################################################################
 ### TO-DO
-### Five-num summary of above variables
-
-
+### Find outliers? ? ?
 
 #outlier_counts <- data %>%
 #  summarise(across(where(is.numeric), ~ sum(. < (quantile(., 0.25, na.rm = TRUE) - 1.5 * IQR(.)) | 
