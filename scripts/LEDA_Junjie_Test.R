@@ -58,12 +58,7 @@ summary_vars <- c("glmath_scr_m1",
                   "readng_scr_p0",
                   "readng_alt_scr_m1",
                   "readng_alt_scr_p0")
-summary_stats <- data %>%
-  select(summary_vars)
-  summarise(across(summary_vars, ~ quantile(., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)))
-
-print(summary_stats)
-
+############
 ### TO-DO
 ### Five-num summary of above variables
 summary_stats <- data %>%
