@@ -10,6 +10,12 @@ df <- read_csv("../../tea/bernado/TEA_2019.csv")
 
 str(df)
 
+# Searching for extraneous values 
+# 5-number summary 
+df %>% 
+  select_if(is.numeric) %>% 
+  sapply(MARGIN = 2, summary) 
+
 # Structure of the Data
 
 # Counting Unique School and district 
@@ -35,14 +41,10 @@ df %>%
   arrange(desc(districtid_nces_enroll_p0)) %>% 
   head(6)
 
-# Searching for extraneous values 
-# 5-number summary 
-df %>% 
-  select_if(is.numeric) %>% 
-  sapply(MARGIN = 2, summary) 
+
 
 diff_scores = df %>% 
-  select(glmath_scr_m1, glmath_scr_p0, readng_scr_m1, readng_scr_p0) %>% 
+  dyplr::select(glmath_scr_m1, glmath_scr_p0, readng_scr_m1, readng_scr_p0) %>% 
   mutate(diff_math_scr = glmath_scr_p0 - glmath_scr_m1, 
          diff_read_scr = readng_scr_p0 - readng_scr_m1)
 
@@ -61,14 +63,14 @@ ggsave("read_diff.png")
 
 # free-reduced lunch, how many years 
 df %>%
-  select(starts_with("frl_")) %>% 
+  dpylr::select(starts_with("frl_")) %>% 
   rowwise() %>% 
   mutate(any_frl = any(across(starts_with("frl_")))) %>%
   ungroup() %>% 
   print()
 
 df %>%
-  select(starts_with("lep_")) %>% 
+  dyplr::select(starts_with("lep_")) %>% 
   rowwise() %>% 
   mutate(any_frl = any(across(starts_with("lep_")))) %>%
   ungroup() %>% 
