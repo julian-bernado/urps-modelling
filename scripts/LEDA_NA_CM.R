@@ -34,8 +34,8 @@ ggsave("na.pdf")
 
 df %>% 
   select(starts_with("homeless_")) %>% 
-  sapply(any(is.na()))
+  any(is.na())
 
 df %>% 
   select(starts_with("homeless_")) %>% 
-  sapply(all(is.na()))
+  all(is.na())
