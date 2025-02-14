@@ -38,8 +38,14 @@ df %>%
   ungroup() %>% 
   select(starts_with("homeless_"), has_na)
 
-df <- df %>%
+df %>%
   rowwise() %>%
   mutate(all_na = all(is.na(across(starts_with("homeless_"))))) %>%
   ungroup() %>% 
   select(starts_with("homeless_"), all_na)
+
+
+df %>%
+  rowwise() %>%
+  mutate(num_times_homeless = sum(starts_with("homeless_"))) %>%
+  ungroup() 

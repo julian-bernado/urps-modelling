@@ -3,10 +3,13 @@
 library(dplyr)
 library(readr)
 library(tidyverse)
+library(here)
 
 # add nrow argument 
 # read_csv readr (tidy) 
 df <- read_csv("../../tea/bernado/TEA_2019.csv", n_max = 100)
+
+# Structure of the Data
 
 # Counting Unique School and district 
 # School
@@ -16,16 +19,22 @@ df %>%
 
 #District
 df %>% 
-  select(schoolid_nces_assess_p0) %>% 
+  select(districtid_nces_assess_p0) %>% 
   unique(districtid_nces_assess_p0)
 
 # District with most schools 
 df %>% 
-  group_by(schoolid_nces_assess_p0) %>% 
-  summarize(n_schools = n(districtid_nces_assess_p0))
+  group_by(districtid_nces_assess_p0) %>% 
+  summarize(n_schools = unique(schoolid_nces_assess_p0)) %>% 
+  arrange(desc(n_schools)) %>% 
+  head(6)
 
+# District with the most students 
+df %>% 
+  arrange(desc(districtid_nces_enroll_p0)) %>% 
+  head(6)
 
-
+# Searching for extraneous values 
 # 5-number summary 
 df %>% 
   select_if(is.numeric) %>% 
@@ -40,10 +49,14 @@ diff_scores = df %>%
 diff_scores %>% 
   ggplot(aes(diff_math_scr)) +
   geom_histogram()
+
+ggsave(filename = here("figs","math_diff.png"))
   
 diff_scores %>% 
   ggplot(aes(diff_read_scr)) +
   geom_histogram()
+
+ggsave(filename = here("figs","read_diff.png"))
 
 # free-reduced lunch, how many years 
 df %>%
