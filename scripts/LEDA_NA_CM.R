@@ -32,10 +32,6 @@ na_df %>%
   geom_histogram(aes(x = total_na))
 ggsave("na.pdf")
 
-df %>% 
-  select(starts_with("homeless_")) %>% 
-  any(is.na())
+any(is.na(df %>% select(starts_with("homeless_"))))
 
-df %>% 
-  select(starts_with("homeless_")) %>% 
-  all(is.na())
+all(is.na(df %>% select(starts_with("homeless_"))))
