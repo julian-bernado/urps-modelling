@@ -66,8 +66,7 @@ summary_stats <- data %>%
                    ~ quantile(., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE))) %>%
   t() %>%
   as.data.frame() %>%
-  setNames(c("Min", "Q1", "Median", "Q3", "Max")) %>%  # Rename columns
-  rownames_to_column(var = "Variable")  # Add variable names as a column
+  setNames(c("Min", "Q1", "Median", "Q3", "Max"))
 
 print(summary_stats)
 
