@@ -35,9 +35,11 @@ ggsave("na.pdf")
 df %>%
   rowwise() %>%
   mutate(has_na = any(is.na(across(starts_with("homeless_"))))) %>%
-  ungroup()
+  ungroup() %>% 
+  select(starts_with("homeless_"), has_na)
 
 df <- df %>%
   rowwise() %>%
   mutate(all_na = all(is.na(across(starts_with("homeless_"))))) %>%
-  ungroup()
+  ungroup() %>% 
+  select(starts_with("homeless_"), all_na)
