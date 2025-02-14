@@ -58,20 +58,36 @@ summary_vars <- c("glmath_scr_m1",
                   "readng_scr_p0",
                   "readng_alt_scr_m1",
                   "readng_alt_scr_p0")
-############
-### TO-DO
-### Five-num summary of above variables
+
 summary_stats <- data %>%
   summarise(across(all_of(summary_vars), 
                    ~ quantile(., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE))) %>%
   t() %>%
   as.data.frame() %>%
-  setNames(c("Min", "Q1", "Median", "Q3", "Max"))
+  setNames(c("Min", "Q1", "Median", "Q3", "Max"))  # Rename columns
+
+# Compute outlier thresholds (Lower Bound, Upper Bound)
+summary_stats <- summary_stats %>%
+  mutate(
+    IQR = Q3 - Q1,
+    Lower_Threshold = Q1 - 1.5 * IQR,
+    Upper_Threshold = Q3 + 1.5 * IQR
+  )
+
+# Compute outlier counts
+outlier_counts <- data %>%
+  summarise(across(all_of(summary_vars), 
+                   ~ sum(. < (quantile(., 0.25, na.rm = TRUE) - 1.5 * IQR(.)) | 
+                           . > (quantile(., 0.75, na.rm = TRUE) + 1.5 * IQR(.)), na.rm = TRUE))) %>%
+  t() %>%
+  as.data.frame() %>%
+  setNames("Outlier_Count")
+
+# Merge outlier counts into summary_stats
+summary_stats <- summary_stats %>%
+  mutate(Variable = rownames(summary_stats)) %>%  # Keep variable names
+  left_join(outlier_counts %>% mutate(Variable = rownames(outlier_counts)), by = "Variable") %>%
+  select(Variable, everything())  # Reorder columns
 
 print(summary_stats)
 
-
-#outlier_counts <- data %>%
-#  summarise(across(where(is.numeric), ~ sum(. < (quantile(., 0.25, na.rm = TRUE) - 1.5 * IQR(.)) | 
-#                                              . > (quantile(., 0.75, na.rm = TRUE) + 1.5 * IQR(.)), na.rm = TRUE)))
-#print(outlier_counts)
