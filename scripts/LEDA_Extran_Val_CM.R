@@ -8,6 +8,8 @@ library(tidyverse)
 # read_csv readr (tidy) 
 df <- read_csv("../../tea/bernado/TEA_2019.csv")
 
+colnames(df)
+
 # Structure of the Data
 
 # Counting Unique School and district 
