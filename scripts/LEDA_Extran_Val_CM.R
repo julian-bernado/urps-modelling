@@ -3,7 +3,6 @@
 library(dplyr)
 library(readr)
 library(tidyverse)
-library(here)
 
 # add nrow argument 
 # read_csv readr (tidy) 
@@ -50,13 +49,13 @@ diff_scores %>%
   ggplot(aes(diff_math_scr)) +
   geom_histogram()
 
-ggsave(filename = here("figs","math_diff.png"))
+ggsave("math_diff.png")
   
 diff_scores %>% 
   ggplot(aes(diff_read_scr)) +
   geom_histogram()
 
-ggsave(filename = here("figs","read_diff.png"))
+ggsave("read_diff.png")
 
 # free-reduced lunch, how many years 
 df %>%

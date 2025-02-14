@@ -35,8 +35,8 @@ ggsave("na.pdf")
 
 # Finding rows with no missing score data
 no_missing_test = df %>% 
-  select(glmath_scr_m1, glmath_scr_m2, glmath_scr_p0, glmath_scr_p1, glmath_scr_p2, 
-         readng_scr_m1, readng_scr_m2, readng_scr_p0, readng_scr_p1, readng_scr_p2) %>% 
+  select(glmath_scr_m1, glmath_scr_p0, glmath_scr_p1, 
+         readng_scr_m1, readng_scr_p0, readng_scr_p1) %>% 
   drop_na()
 
 nrow(no_missing_test) / nrow(df)
