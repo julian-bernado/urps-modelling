@@ -4,9 +4,7 @@ library(dplyr)
 library(readr)
 library(tidyverse)
 
-# temporary n_max so it runs faster, will change for final run  
-df <- read_csv("../../tea/bernado/TEA_2019.csv", n_max = 100)
-
+df <- read_csv("../../tea/bernado/TEA_2019.csv")
 
 na_df = data.frame(colSums(is.na(df))) %>% 
   mutate(total_na = colSums.is.na.df..) %>% 
@@ -32,20 +30,34 @@ na_df %>%
   geom_histogram(aes(x = total_na))
 ggsave("na.pdf")
 
+# Finding percentage of rows that have any NA 
+1 - nrow(df %>% drop_na()) / nrow(df)
+
+# Finding rows with no missing score data
+no_missing_test = df %>% 
+  select(glmath_scr_m1, glmath_scr_m2, glmath_scr_p0, glmath_scr_p1, glmath_scr_p2, 
+         readng_scr_m1, readng_scr_m2, readng_scr_p0, readng_scr_p1, readng_scr_p2) %>% 
+  drop_na()
+
+nrow(no_missing_test) / nrow(df)
+
 df %>%
   rowwise() %>%
   mutate(has_na = any(is.na(across(starts_with("homeless_"))))) %>%
   ungroup() %>% 
-  select(starts_with("homeless_"), has_na)
+  select(starts_with("homeless_"), has_na) %>% 
+  print()
 
 df %>%
   rowwise() %>%
   mutate(all_na = all(is.na(across(starts_with("homeless_"))))) %>%
   ungroup() %>% 
-  select(starts_with("homeless_"), all_na)
+  select(starts_with("homeless_"), all_na) %>% 
+  print()
 
 
 df %>%
   rowwise() %>%
   mutate(num_times_homeless = sum(starts_with("homeless_"))) %>%
-  ungroup() 
+  ungroup() %>% 
+  print()

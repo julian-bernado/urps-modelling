@@ -7,7 +7,7 @@ library(here)
 
 # add nrow argument 
 # read_csv readr (tidy) 
-df <- read_csv("../../tea/bernado/TEA_2019.csv", n_max = 100)
+df <- read_csv("../../tea/bernado/TEA_2019.csv")
 
 # Structure of the Data
 
@@ -41,9 +41,9 @@ df %>%
   sapply(MARGIN = 2, summary) 
 
 diff_scores = df %>% 
-  select(glmath_scr_m1, glmath_scr_p0, reading_scr_m1, reading_scr_p0) %>% 
+  select(glmath_scr_m1, glmath_scr_p0, readng_scr_m1, readng_scr_p0) %>% 
   mutate(diff_math_scr = glmath_scr_p0 - glmath_scr_m1, 
-         diff_read_scr = reading_scr_p0 - reading_scr_m1)
+         diff_read_scr = readng_scr_p0 - readng_scr_m1)
 
 # when can visualize these histograms will see if there are any clear outliers
 diff_scores %>% 
@@ -63,10 +63,12 @@ df %>%
   select(starts_with("frl_")) %>% 
   rowwise() %>% 
   mutate(any_frl = any(across(starts_with("frl_")))) %>%
-  ungroup() 
+  ungroup() %>% 
+  print()
 
 df %>%
   select(starts_with("lep_")) %>% 
   rowwise() %>% 
   mutate(any_frl = any(across(starts_with("lep_")))) %>%
-  ungroup() 
+  ungroup() %>% 
+  print()
