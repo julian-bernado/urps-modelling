@@ -112,10 +112,9 @@ zjunjie_exit:
 	@docker cp zjunjie_urps25:/home/rstudio/urps-modelling ../docker/urps-modelling
 	@docker stop zjunjie_urps25
 	@echo "Updating Git repository on branch 'zjunjie'..."
-	@cd ../docker && \
-		git checkout zjunjie && \
-		git add .; \
-		read -p "Enter commit message: " msg; \
-		git commit -m "$$msg"; \
-		git push origin zjunjie
-	@exit
+	@cd ../docker/urps-modelling && \
+	git checkout zjunjie && \
+	git add . && \
+	git commit && \
+	git push origin zjunjie && \
+	exit
