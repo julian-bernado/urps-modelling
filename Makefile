@@ -74,7 +74,7 @@ ckmoy_exit:
 	@echo "Updating Git repository on branch 'ckmoy'..."
 	@cd ../docker
 	@git checkout ckmoy
-	@git add
+	@git add .
 	@git commit
 	@git push origin ckmoy
 	@exit
