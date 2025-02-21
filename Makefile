@@ -64,20 +64,23 @@ ckmoy_start:
 	docker cp ./ ckmoy_urps25:/home/rstudio/urps-modelling
 	docker cp ../../tea/ckmoy/TEA_2019.csv ckmoy_urps25:/home/rstudio/TEA_2019.csv
 
+
 ckmoy_exit:
-	@echo "Performing cleanup and saving changes for container ckmoy_urps25..."
+	@echo "Performing cleanup and saving changes for container Caroline..."
 	@rm -rf ../docker
 	@mkdir ../docker
 	@echo "Copying data from container ckmoy_urps25..."
 	@docker cp ckmoy_urps25:/home/rstudio/urps-modelling ../docker/urps-modelling
 	@docker stop ckmoy_urps25
 	@echo "Updating Git repository on branch 'ckmoy'..."
-	@cd ../docker
-	@git checkout ckmoy
-	@git add
-	@git commit
-	@git push origin ckmoy
-	@exit
+	@cd ../docker/urps-modelling &&\
+	echo "Moved into the correct directory" &&\
+	git checkout ckmoy &&\
+	echo "adding changes" &&\
+	git add . &&\
+	git commit &&\
+	echo "pushing changes" &&\
+	git push origin ckmoy
 
 # ======================
 # Junjie (zjunjie) Targets
@@ -95,7 +98,6 @@ zjunjie_login:
 
 zjunjie_start:
 	@echo "Running remote start commands for container Junjie..."
-	cd \$HOME/urps-modelling
 	git checkout zjunjie
 	git pull origin zjunjie
 	docker start zjunjie_urps25
@@ -111,10 +113,11 @@ zjunjie_exit:
 	@docker cp zjunjie_urps25:/home/rstudio/urps-modelling ../docker/urps-modelling
 	@docker stop zjunjie_urps25
 	@echo "Updating Git repository on branch 'zjunjie'..."
-	@cd ../docker && \
-		git checkout zjunjie && \
-		git add .; \
-		read -p "Enter commit message: " msg; \
-		git commit -m "$$msg"; \
-		git push origin zjunjie
-	@exit
+	@cd ../docker/urps-modelling &&\
+	echo "Moved into the correct directory" &&\
+	git checkout zjunjie &&\
+	echo "adding changes" &&\
+	git add . &&\
+	git commit &&\
+	echo "pushing changes" &&\
+	git push origin zjunjie
