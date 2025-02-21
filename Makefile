@@ -33,12 +33,11 @@ bernado_exit:
 	@docker cp bernado_urps25:/home/rstudio/urps-modelling ../docker/urps-modelling
 	@docker stop bernado_urps25
 	@echo "Updating Git repository on branch 'bernado'..."
-	@cd ../docker && \
-		git checkout bernado && \
-		git add .; \
-		read -p "Enter commit message: " msg; \
-		git commit -m "$$msg"; \
-		git push origin bernado
+	@cd ../docker
+	@git checkout bernado
+	@git add .
+	@git commit
+	@git push origin bernado
 	@exit
 
 # ======================
@@ -71,12 +70,11 @@ ckmoy_exit:
 	@docker cp ckmoy_urps25:/home/rstudio/urps-modelling ../docker/urps-modelling
 	@docker stop ckmoy_urps25
 	@echo "Updating Git repository on branch 'ckmoy'..."
-	@cd ../docker && \
-		git checkout ckmoy && \
-		git add .; \
-		read -p "Enter commit message: " msg; \
-		git commit -m "$$msg"; \
-		git push origin ckmoy
+	@cd ../docker
+	@git checkout ckmoy
+	@git add
+	@git commit
+	@git push origin ckmoy
 	@exit
 
 # ======================
