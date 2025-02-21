@@ -33,7 +33,7 @@ bernado_exit:
 	@docker cp bernado_urps25:/home/rstudio/urps-modelling ../docker/urps-modelling
 	@docker stop bernado_urps25
 	@echo "Updating Git repository on branch 'bernado'..."
-	@cd ../docker
+	@cd ../docker/urps-modelling
 	@git checkout bernado
 	@git add .
 	@git commit
