@@ -15,7 +15,7 @@ bernado_start:
 	docker start bernado_urps25
 	docker cp ./ bernado_urps25:/home/rstudio/urps-modelling
 	docker cp ../../tea/bernado/TEA_2019.csv bernado_urps25:/home/rstudio/TEA_2019.csv
-EOF
+	EOF
 
 bernado_exit:
 	@echo "Performing cleanup and saving changes for container Julian..."
@@ -48,7 +48,7 @@ ckmoy_start:
 	docker start ckmoy_urps25
 	docker cp ./ ckmoy_urps25:/home/rstudio/urps-modelling
 	docker cp ../../tea/ckmoy/TEA_2019.csv ckmoy_urps25:/home/rstudio/TEA_2019.csv
-EOF
+	EOF
 
 ckmoy_exit:
 	@echo "Performing cleanup and saving changes for container ckmoy_urps25..."
@@ -81,7 +81,7 @@ zjunjie_start:
 	docker start zjunjie_urps25
 	docker cp ./ zjunjie_urps25:/home/rstudio/urps-modelling
 	docker cp ../../tea/zjunjie/TEA_2019.csv zjunjie_urps25:/home/rstudio/TEA_2019.csv
-EOF
+	EOF
 
 zjunjie_exit:
 	@echo "Performing cleanup and saving changes for container Junjie..."
