@@ -64,7 +64,7 @@ ckmoy_start:
 	git pull origin ckmoy
 	docker start ckmoy_urps25
 	docker cp ./ ckmoy_urps25:/home/rstudio/urps-modelling
-	docker cp ../../tea/ckmoy/TEA_2019.csv ckmoy_urps25:/home/rstudio/TEA_2019.csv
+	docker cp ../../bernado/ckmoy/TEA_2019.csv ckmoy_urps25:/home/rstudio/TEA_2019.csv
 
 ckmoy_exit:
 	@echo "Performing cleanup and saving changes for container ckmoy_urps25..."
@@ -102,7 +102,7 @@ zjunjie_start:
 	git pull origin zjunjie
 	docker start zjunjie_urps25
 	docker cp ./ zjunjie_urps25:/home/rstudio/urps-modelling
-	docker cp ../../tea/zjunjie/TEA_2019.csv zjunjie_urps25:/home/rstudio/TEA_2019.csv
+	docker cp ../../tea/bernado/TEA_2019.csv zjunjie_urps25:/home/rstudio/TEA_2019.csv
 
 
 zjunjie_exit:
