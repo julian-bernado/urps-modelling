@@ -33,16 +33,14 @@ bernado_exit:
 	@docker cp bernado_urps25:/home/rstudio/urps-modelling ../docker/urps-modelling
 	@docker stop bernado_urps25
 	@echo "Updating Git repository on branch 'bernado'..."
-	@cd ../docker/urps-modelling
-	@echo "Moved into the correct directory"
-	@pwd
-	@git checkout bernado
-	@echo "adding changes"
-	@git add .
-	@git commit
-	@echo "pushing changes"
-	@git push origin bernado
-	@exit
+	@cd ../docker/urps-modelling &&\
+	echo "Moved into the correct directory" &&\
+	git checkout bernado &&\
+	echo "adding changes" &&\
+	git add . &&\
+	git commit &&\
+	echo "pushing changes" &&\
+	git push origin bernado
 
 # ======================
 # Caroline (ckmoy) Targets
