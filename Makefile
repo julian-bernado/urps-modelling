@@ -97,7 +97,6 @@ zjunjie_login:
 
 zjunjie_start:
 	@echo "Running remote start commands for container Junjie..."
-	cd \$HOME/urps-modelling
 	git checkout zjunjie
 	git pull origin zjunjie
 	docker start zjunjie_urps25
