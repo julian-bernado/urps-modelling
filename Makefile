@@ -34,9 +34,12 @@ bernado_exit:
 	@docker stop bernado_urps25
 	@echo "Updating Git repository on branch 'bernado'..."
 	@cd ../docker/urps-modelling
+	@echo "Moved into the correct directory"
 	@git checkout bernado
+	@echo "adding changes"
 	@git add .
 	@git commit
+	@echo "pushing changes"
 	@git push origin bernado
 	@exit
 
