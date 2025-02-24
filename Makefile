@@ -72,12 +72,12 @@ ckmoy_exit:
 	@docker cp ckmoy_urps25:/home/rstudio/urps-modelling ../docker/urps-modelling
 	@docker stop ckmoy_urps25
 	@echo "Updating Git repository on branch 'ckmoy'..."
-	@cd ../docker
-	@git checkout ckmoy
-	@git add .
-	@git commit
-	@git push origin ckmoy
-	@exit
+	@cd ../docker/urps-modelling &&\
+	git checkout ckmoy &&\
+	git add . &&\
+	git commit &&\
+	git push origin ckmoy &&\
+	exit
 
 # ======================
 # Junjie (zjunjie) Targets
