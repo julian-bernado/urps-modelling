@@ -60,6 +60,7 @@ ckmoy_start:
 	@echo "Running remote start commands for container Caroline..."
 	git checkout ckmoy
 	git pull origin ckmoy
+	chmod -R 777 ./
 	docker start ckmoy_urps25
 	docker cp ./ ckmoy_urps25:/home/rstudio/urps-modelling
 	docker cp ~/../tea/bernado/TEA_2019.csv ckmoy_urps25:/home/rstudio/TEA_2019.csv
@@ -98,6 +99,7 @@ zjunjie_start:
 	cd \$HOME/urps-modelling
 	git checkout zjunjie
 	git pull origin zjunjie
+	chmod -R 777 ./
 	docker start zjunjie_urps25
 	docker cp ./ zjunjie_urps25:/home/rstudio/urps-modelling
 	docker cp ~/../tea/bernado/TEA_2019.csv zjunjie_urps25:/home/rstudio/TEA_2019.csv
