@@ -1,0 +1,173 @@
+This file contains candidate models for grade 3 students' readng scores.    
+1. Data Preprocessing
+2. Modeling
+3. AIC, BIC, MSE
+
+# Reproducibility   
+```{r}
+set.seed(489)
+```   
+
+Data is preprocessed as `Junjie_Reading345_V1.Rmd`
+
+# Load Pacakges and Data    
+```{r warning=FALSE}
+library(readr)
+library(dplyr)
+library(lme4)
+library(purrr)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+```  
+```{R}
+unique_schools <- unique(data$schoolid_nces_enroll_p0)
+
+schools_sampled <- sample(unique_schools, size = round(0.3 * length(unique_schools)))
+```
+
+
+```{r}
+df <- data %>% 
+  filter(schoolid_nces_enroll_p0 %in% schools_sampled) %>% 
+  # Remove variables with only NA's
+  select(where(~ !all(is.na(.)))) %>% 
+  # Remove irrelevant math scores.
+  select(-c('glmath_ver_m1', 'glmath_ver_p0', 
+                   'glmath_lan_m1', 'glmath_lan_p0', 
+                   'glmath_scr_m1', 'glmath_scr_p0', 
+                   'glmath_alt_scr_m1', 'glmath_alt_scr_p0',
+                   'readng_alt_scr_m1', 'readng_alt_scr_p0',
+                   'withdrawal_date_p0')) %>% 
+  # Remove those ends by "_midd"
+  select(-ends_with("_midd")) %>% 
+  select(-c('readng_ver_m1', 'readng_lan_m1', 'readng_scr_m1', 'replacement_id', 'acadyear','dropout_inferred_m1', 'persist_inferred_m1')) %>% 
+  # Remove those didn't have exam scores
+  filter(!is.na(readng_scr_p0), gradelevel == 3) %>% 
+  mutate(age_int = round(age))
+
+```   
+```{R}
+num_na <- data.frame(
+  missing = colSums(is.na(df))
+)
+```
+
+# Modeling    
+```{R}
+vars <- names(df)[sapply(df, function(x) length(unique(x)) < 10)]
+```
+```{R}
+get_summary <- function(var){
+  df %>% 
+  group_by(!!sym(var)) %>% 
+  summarize(mean(readng_scr_p0), 
+            median(readng_scr_p0),
+            count = n(),
+            proportion = n()/nrow(df))
+}
+```
+
+```{R}
+summary_list <- map(vars, get_summary)
+summary_list
+```
+For 'enrfay_school', 'enrfay_district', it might be more reasonable to have binary values. 
+'enrfay_state' may not needed because of imbalance, 1 has proportion 0.9983.
+migrant too small
+
+gender
+raceth
+age_int
+frl_ever > frl_now.     but _2yr has missing value
+lep_ever > lep_now
+specialed_ever > specialed_now
+enrfay_district > enrfay_school        but maybe not state. 
+
+
+transferred_out_p0
+transferred_out_m1
+chronic_absentee_m1
+chronic_absentee_p0
+readng_lan_p0
+
+
+homeless_ever > homeless_now                   only 0.015
+migrant_ever > migrant_now  
+dropout_inferred_p0 = persist_inferred_p0      only 0.011
+
+Do _ever includes _2yrs? Solved. 
+For grade 3 students, we have: _ever = _elem = _2yr > _now
+
+What is the total score for readng? 
+
+# Candidate models
+```{r}
+Models_G3_R <- list() 
+```
+```{R}
+Models_G3_R[["mod0"]] <- lmer(readng_scr_p0 ~ 1 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod1"]] <- lmer(readng_scr_p0 ~ gender + raceth + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod2"]] <- lmer(readng_scr_p0 ~ gender + raceth + age_int + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod3"]] <- lmer(readng_scr_p0 ~ gender + raceth + age_int + frl_ever + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod4"]] <- lmer(readng_scr_p0 ~ gender + raceth + age_int + frl_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod5"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod6"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + lep_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod7"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + lep_ever + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod8"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + specialed_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod9"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + specialed_now + enrfay_school + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod10"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + specialed_now + enrfay_state + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod11"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod12"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 +chronic_absentee_m1 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod13"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 +chronic_absentee_m1 + readng_lan_p0 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod14"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + readng_lan_p0 + homeless_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod15"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + readng_lan_p0 + homeless_now + migrant_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G3_R[["mod16"]] <- lmer(readng_scr_p0 ~ gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + readng_lan_p0 + homeless_now + migrant_now + persist_inferred_p0 + (1 | schoolid_nces_enroll_p0), data = df)
+```
+
+```{R}
+Models_G3_R_Sum <- list()
+
+for(i in seq_along(Models_G3_R)) {
+  Models_G3_R_Sum[[i]] <- list(
+    model = Models_G3_R[[i]],
+    AIC = AIC(Models_G3_R[[i]]),
+    BIC = BIC(Models_G3_R[[i]]),
+    MSE = mean(residuals(Models_G3_R[[i]])^2)
+  )
+}
+names(Models_G3_R_Sum) <- names(Models_G3_R)
+
+```
+
+```{r}
+save(Models_G3_R_Sum, file = "~/urps-modelling/Rdata/Models_G3_R_Sum.RData")
+```
+
+```{r}
+aic_values <- sapply(Models_G3_R_Sum, function(x) x$AIC)
+aic_values
+```
+
+```{r}
+bic_values <- sapply(Models_G3_R_Sum, function(x) x$BIC)
+bic_values
+```
+```{r}
+mse_values <- sapply(Models_G3_R_Sum, function(x) x$MSE)
+mse_values
+```
