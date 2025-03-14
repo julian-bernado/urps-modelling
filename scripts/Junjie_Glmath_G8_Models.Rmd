@@ -1,0 +1,136 @@
+This file contains candidate models for grade 8 students glmath scores.    
+1. Data Preprocessing
+2. Modeling
+3. AIC, BIC, MSE
+
+# Reproducibility   
+```{r}
+set.seed(489)
+```   
+
+# Load Pacakges and Data    
+```{r warning=FALSE}
+library(readr)
+library(dplyr)
+library(lme4)
+library(purrr)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+```  
+```{R}
+unique_schools <- unique(data$schoolid_nces_enroll_p0)
+
+schools_sampled <- sample(unique_schools, size = round(0.3 * length(unique_schools)))
+```
+```{r}
+df <- data %>% 
+  filter(schoolid_nces_enroll_p0 %in% schools_sampled) %>% 
+  # Remove variables with only NA's
+  select(where(~ !all(is.na(.)))) %>% 
+  # Remove irrelevant readng scores.
+  select(-c('readng_ver_p0', 
+            'readng_lan_p0', 
+            'readng_scr_p0', 
+            'readng_alt_scr_m1', 'readng_alt_scr_p0',
+            'glmath_alt_scr_m1', 'glmath_alt_scr_p0')) %>% 
+  select(-c('replacement_id', 'acadyear')) %>% 
+  # Remove those didn't have exam scores
+  filter(!is.na(glmath_scr_p0), gradelevel == 8) %>% 
+  mutate(age_int = round(age))
+```   
+```{R}
+  
+vars <- names(df)[sapply(df, function(x) length(unique(x)) < 10)]
+  
+get_summary <- function(var){
+  df %>% 
+    group_by(!!sym(var)) %>% 
+    summarize(mean(glmath_scr_p0), 
+              median(glmath_scr_p0),
+              count = n(),
+              proportion = n()/nrow(df))
+}
+  
+summary_list <- map(vars, get_summary)
+summary_list
+```
+_ver_  do not consider for now. 
+dropout_inferred_ == persist_inferred_ 
+migrant too small
+
+
+  # Candidate models
+```{r}
+Models_G8_M <- list() 
+```
+```{R}
+Models_G8_M[["mod0"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod1"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 +  readng_scr_m1 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod2"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod3"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + age_int + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod4"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + age_int + frl_ever + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod5"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + age_int + frl_ever + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod6"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + age_int + frl_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod7"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + age_int + frl_now + lep_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod8"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + age_int + frl_now + specialed_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod9"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + age_int + frl_now + specialed_now + enrfay_school + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod10"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + age_int + frl_now + specialed_now + enrfay_state + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod11"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod12"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + transferred_out_m1 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod13"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + glmath_lan_p0 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod14"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + glmath_lan_p0 + homeless_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod15"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + glmath_lan_p0 + homeless_now + migrant_now + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod16"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + glmath_lan_p0 + homeless_now + migrant_now + persist_inferred_p0 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod17"]] <- lmer(glmath_scr_p0 ~ gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + transferred_out_m1 + chronic_absentee_p0 + chronic_absentee_m1 + glmath_lan_p0 + glmath_lan_m1 + persist_inferred_p0 + persist_inferred_m1 + (1 | schoolid_nces_enroll_p0), data = df)
+
+Models_G8_M[["mod18"]] <- lmer(glmath_scr_p0 ~ glmath_scr_m1 + gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_p0 + glmath_lan_p0 +  persist_inferred_p0 + (1 | schoolid_nces_enroll_p0), data = df)
+```
+
+```{R}
+Models_G8_M_Sum <- list()
+
+for(i in seq_along(Models_G8_M)) {
+  Models_G8_M_Sum[[i]] <- list(
+    model = Models_G8_M[[i]],
+    AIC = AIC(Models_G8_M[[i]]),
+    BIC = BIC(Models_G8_M[[i]]),
+    MSE = mean(residuals(Models_G8_M[[i]])^2)
+  )
+}
+names(Models_G8_M_Sum) <- names(Models_G8_M)
+
+```
+
+```{r}
+#save(Models_G8_R_Sum, file = "~/urps-modelling/Rdata/Models_G8_R_Sum.RData")
+```
+
+```{r}
+aic_values <- sapply(Models_G8_M_Sum, function(x) x$AIC)
+aic_values
+```
+
+```{r}
+bic_values <- sapply(Models_G8_M_Sum, function(x) x$BIC)
+bic_values
+```
+```{r}
+mse_values <- sapply(Models_G8_M_Sum, function(x) x$MSE)
+mse_values
+```
