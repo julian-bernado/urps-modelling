@@ -1,0 +1,108 @@
+This file contains candidate models for grade 3 students' readng scores.    
+1. Data Preprocessing
+2. Modeling
+3. AIC, BIC, MSE
+
+# Reproducibility   
+```{r}
+set.seed(489)
+```   
+
+Data is preprocessed as `Junjie_Reading345_V1.Rmd`
+
+# Load Pacakges and Data    
+```{r warning=FALSE}
+library(readr)
+library(dplyr)
+library(lme4)
+library(purrr)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+```  
+```{R}
+unique_schools <- unique(data$schoolid_nces_enroll_p0)
+
+schools_sampled <- sample(unique_schools, size = round(0.3 * length(unique_schools)))
+```
+
+
+```{r}
+df <- data %>% 
+  filter(schoolid_nces_enroll_p0 %in% schools_sampled) %>% 
+  # Remove variables with only NA's
+  select(where(~ !all(is.na(.)))) %>% 
+  # Remove irrelevant math scores.
+  select(-c('glmath_ver_m1', 'glmath_ver_p0', 
+                   'glmath_lan_m1', 'glmath_lan_p0', 
+                   'glmath_scr_m1', 'glmath_scr_p0', 
+                   'glmath_alt_scr_m1', 'glmath_alt_scr_p0',
+                   'readng_alt_scr_m1', 'readng_alt_scr_p0',
+                   'withdrawal_date_p0')) %>% 
+  # Remove those ends by "_midd"
+  select(-ends_with("_midd")) %>% 
+  select(-c('readng_ver_m1', 'readng_lan_m1', 'readng_scr_m1', 'replacement_id', 'acadyear','dropout_inferred_m1', 'persist_inferred_m1')) %>% 
+  # Remove those didn't have exam scores
+  filter(!is.na(readng_scr_p0), gradelevel == 3) %>% 
+  mutate(age_int = round(age))
+
+```   
+```{R}
+num_na <- data.frame(
+  missing = colSums(is.na(df))
+)
+```
+
+# Modeling    
+```{R}
+vars <- names(df)[sapply(df, function(x) length(unique(x)) < 10)]
+```
+```{R}
+get_summary <- function(var){
+  df %>% 
+  group_by(!!sym(var)) %>% 
+  summarize(mean(readng_scr_p0), 
+            median(readng_scr_p0),
+            count = n(),
+            proportion = n()/nrow(df))
+}
+```
+
+```{R}
+summary_list <- map(vars, get_summary)
+summary_list
+```
+
+We start with models from last time with best AIC/BIC/MSE scores. 
+AIC: Model 12-16
+BIC: Model 12-16
+MSE: Model 8-16
+
+So we mainly look at Model 12-16. We can start with thsoe variables. 
+But, it may also be helpful if we go back and look at variables that casues significant drop in AIC/BIC/MSE
+
+Models_G3_R[["mod12"]] gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 
+
+Models_G3_R[["mod13"]] gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + readng_lan_p0 
+
+Models_G3_R[["mod14"]] gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + readng_lan_p0 + homeless_now 
+
+Models_G3_R[["mod15"]] gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + readng_lan_p0 + homeless_now + migrant_now 
+
+Models_G3_R[["mod16"]] gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 + chronic_absentee_m1 + readng_lan_p0 + homeless_now + migrant_now + persist_inferred_p0
+
+frl_{} lep_{} (less siginificant) specialed_{} chronic_absentee_m1
+
+What about using only those? 
+```{r}  
+model_test <- lmer(readng_scr_p0 ~ raceth + frl_ever + lep_ever + specialed_ever + chronic_absentee_m1 + (1 | schoolid_nces_enroll_p0), data =df)
+AIC(model_test)
+BIC(model_test)
+mean(residuals(model_test)^2)
+```
+What about using _now instead of ever? 
+```{R}
+model_test2 <- lmer(readng_scr_p0 ~ raceth + frl_now + lep_now + specialed_now + chronic_absentee_m1 + (1 | schoolid_nces_enroll_p0), data =df)
+AIC(model_test2)
+BIC(model_test2)
+mean(residuals(model_test2)^2)
+```
+No significant differences. 
