@@ -5,6 +5,7 @@ library(tidyverse)
 library(lme4)
 library(stats)
 library(metan)
+library(splines)
 
 # Data set Download 
 df <- read_csv("TEA_2019.csv")
@@ -106,6 +107,56 @@ models_list[['model0']] = lmer(readng_scr_p0 ~ 1 + (1 | schoolid_nces_enroll_p0)
 
 models_list[['model1']] = lmer(readng_scr_p0 ~ readng_scr_m1 + (1 | schoolid_nces_enroll_p0), 
                                data = seventh_grade)
+
+# Attempting Polynomial  
+model_squared = lmer(readng_scr_p0 ~ I(readng_scr_m1^2) + (1 | schoolid_nces_enroll_p0), 
+     data = seventh_grade)
+
+# lower MSE 
+mean(residuals(models_list[['model1']])^2) # 13830.35
+
+# MSE is actually higher 
+mean(residuals(model_squared)^2)
+
+# Attempting Spline 
+model_spline = lmer(readng_scr_p0 ~ ns(readng_scr_m1, df = 7) + (1 | schoolid_nces_enroll_p0), 
+                     data = seventh_grade)
+
+mean(residuals(model_spline)^2)
+
+AIC_reference = AIC(models_list[['model1']])
+BIC_reference = BIC(models_list[['model1']])
+MSE_reference = mean(residuals(models_list[['model1']])^2)
+
+AIC_spline_list = list()
+BIC_spline_list = list()
+MSE_spline_list = list()
+
+for(i in 1:10){
+  model_spline = lmer(readng_scr_p0 ~ ns(readng_scr_m1, df = i) + (1 | schoolid_nces_enroll_p0), 
+                      data = seventh_grade)
+  AIC_spline_list[i] = AIC(model_spline)
+  BIC_spline_list[i] = BIC(model_spline)
+  MSE_spline_list[i] = mean(residuals(model_spline)^2)
+}
+
+data.frame(AIC = unlist(AIC_spline_list), degree_free = (1:10)) %>% 
+  ggplot(aes(x = degree_free, y = AIC)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = AIC_reference, col = 'red')
+
+data.frame(BIC = unlist(BIC_spline_list), degree_free = (1:10)) %>% 
+  ggplot(aes(x = degree_free, y = BIC)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = BIC_reference, col = 'red')
+
+data.frame(MSE = unlist(MSE_spline_list), degree_free = (1:10)) %>% 
+  ggplot(aes(x = degree_free, y = MSE)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = MSE_reference, col = 'red')
 
 models_list[['model2']] = lmer(readng_scr_p0 ~ readng_scr_m1 + glmath_scr_m1 +  
                                  (1 | schoolid_nces_enroll_p0), data = seventh_grade)
