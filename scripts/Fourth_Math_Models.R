@@ -93,6 +93,42 @@ models_list[['model0']] = lmer(glmath_scr_p0 ~ 1 + (1 | schoolid_nces_enroll_p0)
 models_list[['model1']] = lmer(glmath_scr_p0 ~ glmath_scr_m1 + (1 | schoolid_nces_enroll_p0), 
                                data = fourth_grade)
 
+AIC_reference = AIC(models_list[['model1']])
+BIC_reference = BIC(models_list[['model1']])
+MSE_reference = mean(residuals(models_list[['model1']])^2)
+
+AIC_spline_list = list()
+BIC_spline_list = list()
+MSE_spline_list = list()
+
+for(i in 1:20){
+  model_spline = lmer(glmath_scr_p0 ~ ns(glmath_scr_m1, df = i) + (1 | schoolid_nces_enroll_p0), 
+                      data = fourth_grade)
+  AIC_spline_list[i] = AIC(model_spline)
+  BIC_spline_list[i] = BIC(model_spline)
+  MSE_spline_list[i] = mean(residuals(model_spline)^2)
+}
+
+data.frame(AIC = unlist(AIC_spline_list), degree_free = (1:20)) %>% 
+  ggplot(aes(x = degree_free, y = AIC)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = AIC_reference, col = 'red')
+
+data.frame(BIC = unlist(BIC_spline_list), degree_free = (1:20)) %>% 
+  ggplot(aes(x = degree_free, y = BIC)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = BIC_reference, col = 'red')
+
+data.frame(MSE = unlist(MSE_spline_list), degree_free = (1:20)) %>% 
+  ggplot(aes(x = degree_free, y = MSE)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = MSE_reference, col = 'red')
+
+# five or 6 degrees probably good
+
 models_list[['model2']] = lmer(glmath_scr_p0 ~ glmath_scr_m1 + readng_scr_m1 + 
                                  (1 | schoolid_nces_enroll_p0), data = fourth_grade)
 

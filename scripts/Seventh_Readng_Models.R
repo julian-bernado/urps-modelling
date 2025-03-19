@@ -119,7 +119,7 @@ mean(residuals(models_list[['model1']])^2) # 13830.35
 mean(residuals(model_squared)^2)
 
 # Attempting Spline 
-model_spline = lmer(readng_scr_p0 ~ ns(readng_scr_m1, df = 7) + (1 | schoolid_nces_enroll_p0), 
+model_spline = lmer(readng_scr_p0 ~ ns(readng_scr_m1, df = 5) + (1 | schoolid_nces_enroll_p0), 
                      data = seventh_grade)
 
 mean(residuals(model_spline)^2)
@@ -157,6 +157,8 @@ data.frame(MSE = unlist(MSE_spline_list), degree_free = (1:10)) %>%
   geom_point() + 
   geom_line() + 
   geom_hline(yintercept = MSE_reference, col = 'red')
+
+# from these graphs probably 5 or 6 are the best because after that there's not much improvement
 
 models_list[['model2']] = lmer(readng_scr_p0 ~ readng_scr_m1 + glmath_scr_m1 +  
                                  (1 | schoolid_nces_enroll_p0), data = seventh_grade)
