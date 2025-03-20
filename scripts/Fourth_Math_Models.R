@@ -42,6 +42,12 @@ vars = colnames(fourth_grade)
 
 summaries = map(vars, score_diff)
 
+# Optional Standardization Uncomment out when want standardized results 
+# fourth_grade = fourth_grade %>% 
+#   select(where(is.numeric)) %>% 
+#   select(-schoolid_nces_enroll_m1) %>% 
+#   scale() %>% data.frame()
+
 numeric_fourth = fourth_grade %>% 
   select(where(is.numeric)) 
 

@@ -48,6 +48,12 @@ vars = colnames(third_grade)
 
 summaries = map(vars, score_diff)
 
+# Optional Standardization Uncomment out when want standardized results 
+# third_grade = third_grade %>% 
+#   select(where(is.numeric)) %>% 
+#   select(-schoolid_nces_enroll_m1) %>% 
+#   scale() %>% data.frame()
+
 numeric_third = third_grade %>% 
   select(where(is.numeric)) 
 
@@ -196,3 +202,5 @@ sum_stat_df %>%
   ggplot(aes(x = model_num, y = MSE)) + 
   geom_point() + 
   geom_line()
+
+# Scaling helps a lot!

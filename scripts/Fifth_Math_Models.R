@@ -44,6 +44,12 @@ vars = colnames(fifth_grade)
 
 summaries = map(vars, score_diff)
 
+# Optional Standardization Uncomment out when want standardized results 
+# fifth_grade = fifth_grade %>% 
+#   select(where(is.numeric)) %>% 
+#   select(-schoolid_nces_enroll_m1) %>% 
+#   scale() %>% data.frame()
+
 numeric_fifth = fifth_grade %>% 
   select(where(is.numeric)) 
 
