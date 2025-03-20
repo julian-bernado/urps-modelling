@@ -1,0 +1,156 @@
+This file contains preliminary mixed effect models for reading scores for grade 3, 4, 5 students. 
+We will do the followings: 
+1. Load necessary packages
+2. Data Splitting 0.8 training, 0.2 testing. 
+3. ...
+
+# Reproducibility   
+```{r}
+set.seed(489)
+```   
+
+# Load Pacakges and Data    
+```{r warning=FALSE}
+library(readr)
+library(dplyr)
+library(lme4)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+
+```   
+
+# Data Preprocessing    
+Before splitting data into training and testing set, we need to clean the data for following reasons:
+  
+1. In Logical EDA, we saw many variables with only NA's.    
+   Those variables are not helpful at all in modeling.    
+   Removing them makes modeling easier.     
+   
+2. We don't want to predict reading scores with math scores, so we will delete those related to math scores. 
+  
+3. Since we are modeling current grade, we keep those with current grade in reading. Alternative exam scores seem have different grading scales. Since they are only a very small part of our data, we ignore them for this stage.
+
+4. We are modeling elementary school, so we don't need those ends with '_midd'. 
+
+We replace the old data with this new one because we don't need old data in this modeling process anymore.    
+```{r}
+df <- data %>% 
+  # Remove variables with only NA's
+  select(where(~ !all(is.na(.)))) %>% 
+  # Remove irrelevant math scores.
+  select(-c('glmath_ver_m1', 'glmath_ver_p0', 
+                   'glmath_lan_m1', 'glmath_lan_p0', 
+                   'glmath_scr_m1', 'glmath_scr_p0', 
+                   'glmath_alt_scr_m1', 'glmath_alt_scr_p0',
+                   'readng_alt_scr_m1', 'readng_alt_scr_p0',
+                   'withdrawal_date_p0')) %>% 
+  # Remove those ends by "_midd"
+  select(-ends_with("_midd")) %>% 
+  # Remove those didn't have both exam scores
+  filter(!is.na(readng_scr_p0), gradelevel %in% c('3', '4', '5')) 
+```   
+
+# What if we get rid of all missing values
+
+
+There should be $65 - 10 - 3 = 55$ variables left. Also we should not have NA's for `readng_scr_p0` now. Let's check. 
+```{r}
+cat("Number of rows left: ", nrow(df))
+cat("\nNumber of variables left: ", ncol(df))
+cat("\nNumber of missing values for reading score this year: ", sum(is.na(df$readng_scr_p0)))
+```
+
+Now we look at each variable with missing value and decide what to do with it.    
+```{r}
+num_na <- data.frame(
+  missing = colSums(is.na(df))
+)
+```
+
+
+```{r}
+nrow(df[is.na(df$readng_scr_m1) & df$gradelevel == "3",])
+nrow(df[is.na(df$readng_ver_m1) & df$gradelevel == "3",])
+nrow(df[is.na(df$readng_lan_m1) & df$gradelevel == "3",])
+
+nrow(df[is.na(df$readng_scr_m1) & df$gradelevel == "4",])
+nrow(df[is.na(df$readng_ver_m1) & df$gradelevel == "4",])
+nrow(df[is.na(df$readng_lan_m1) & df$gradelevel == "4",])
+
+nrow(df[is.na(df$readng_scr_m1) & df$gradelevel == "5",])
+nrow(df[is.na(df$readng_ver_m1) & df$gradelevel == "5",])
+nrow(df[is.na(df$readng_lan_m1) & df$gradelevel == "5",])
+```
+
+```{r}
+nrow(df[is.na(df$districtid_nces_enroll_m1) & df$gradelevel == "3",])
+nrow(df[is.na(df$schoolid_nces_enroll_m1) & df$gradelevel == "3",])
+nrow(df[is.na(df$districtid_nces_enroll_m1) & df$gradelevel == "4",])
+nrow(df[is.na(df$schoolid_nces_enroll_m1) & df$gradelevel == "4",])
+nrow(df[is.na(df$districtid_nces_enroll_m1) & df$gradelevel == "5",])
+nrow(df[is.na(df$schoolid_nces_enroll_m1) & df$gradelevel == "5",])
+```
+`districtid_nces_enroll_m1` and `schoolid_nces_enroll_m1`: we will talk more about those in Variable Selection.     
+
+
+# Data Splitting    
+```{r}
+set.seed(489)  # for reproducibility
+
+for(i in 3:5) {
+  df1 <- df[df$gradelevel == i,]
+  n <- nrow(df1)
+  train_indices <- sample(seq_len(n), size = floor(0.8 * n))
+  train <- df1[train_indices, ]
+  test <- df1[-train_indices, ]
+  assign(paste0("df", i), df1)
+  assign(paste0("train", i), train)
+  assign(paste0("test", i), test)
+}
+```   
+
+```{R}
+train3 <- train3 %>% select(-c('readng_ver_m1', 'readng_lan_m1', 'readng_scr_m1'))
+test3 <- test3 %>% select(-c('readng_ver_m1', 'readng_lan_m1', 'readng_scr_m1'))
+```
+
+`districtid_nces_enroll_m1` and `schoolid_nces_enroll_m1`, we determined to set random effect for schoolid. To avoid getting too complicated, we don't use schoolid from the previous year in this model. Districtid is highly correlated with schoolid, I don't think adding  
+
+#################################################################################
+
+# Model for Grade 3
+```{r}
+colnames(train3)
+```
+
+
+
+```{R}
+baseline <- lmer(readng_scr_p0 ~ 1 + (1 | schoolid_nces_enroll_p0), data = train3)
+
+m3 <- lmer(readng_scr_p0 ~ .- replacement_id - acadyear -schoolid_nces_enroll_p0 + (1 | schoolid_nces_enroll_p0), data = train3)
+
+```
+### fixed-effect model matrix is rank deficient so dropping 16 columns / coefficients
+### Warning: Some predictor variables are on very different scales: consider rescaling
+
+```{R}
+summary(baseline)
+summary(m3)
+
+```
+
+```{R}
+m4 <- lmer(readng_scr_p0 ~ .- replacement_id - acadyear -schoolid_nces_enroll_p0 + (1 | schoolid_nces_enroll_p0), data = train4)
+```
+
+```{R}
+summary(m4)
+```
+
+```{R}
+m5 <- lmer(readng_scr_p0 ~ 1 + readng_scr_m1 + (1 | schoolid_nces_enroll_p0), data = train5)
+```
+
+```{r}
+summary(m5)
+```

@@ -1,0 +1,70 @@
+This file contains candidate models for grade 3 students' readng scores.    
+1. Data Preprocessing
+2. Modeling
+3. AIC, BIC, MSE
+
+# Reproducibility   
+```{r}
+set.seed(489)
+```   
+
+Data is preprocessed as `Junjie_Reading345_V1.Rmd`
+
+# Load Pacakges and Data    
+```{r warning=FALSE}
+library(readr)
+library(dplyr)
+library(lme4)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+```  
+
+```{r}
+df <- data %>% 
+  # Remove variables with only NA's
+  select(where(~ !all(is.na(.)))) %>% 
+  # Remove irrelevant math scores.
+  select(-c('glmath_ver_m1', 'glmath_ver_p0', 
+                   'glmath_lan_m1', 'glmath_lan_p0', 
+                   'glmath_scr_m1', 'glmath_scr_p0', 
+                   'glmath_alt_scr_m1', 'glmath_alt_scr_p0',
+                   'readng_alt_scr_m1', 'readng_alt_scr_p0',
+                   'withdrawal_date_p0')) %>% 
+  # Remove those ends by "_midd"
+  select(-ends_with("_midd")) %>% 
+  select(-c('readng_ver_m1', 'readng_lan_m1', 'readng_scr_m1', 'replacement_id', 'acadyear')) %>% 
+  # Remove those didn't have both exam scores
+  filter(!is.na(readng_scr_p0), gradelevel %in% c('3', '4', '5'))
+
+```   
+
+# Modeling    
+```{R}
+colnames(df)
+```
+```{r}
+cor(df$readng_scr_p0, df$schoolid_nces_enroll_p0)
+```
+```{R}
+anova_model <- aov(readng_scr_p0 ~ as.factor(schoolid_nces_enroll_p0), data = df)
+summary(anova_model)
+```
+
+
+```{r}
+baseline <- lmer(readng_scr_p0 ~ 1 + (1 | schoolid_nces_enroll_p0), data = df)
+summary(baseline)
+```
+
+```{r}
+AIC(baseline)
+BIC(baseline)
+mean(residuals(baseline)^2)
+```
+
+```{R}
+m3 <- lmer(readng_scr_p0 ~ .-schoolid_nces_enroll_p0 + (1 | schoolid_nces_enroll_p0), data = df)
+
+AIC(m3)
+BIC(m3)
+mean(residuals(m3)^2)
+``` 
