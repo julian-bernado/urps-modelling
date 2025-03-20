@@ -56,3 +56,15 @@ table(data$enrfay_school, data$dropout_inferred_p0)
 
 table(data$dropout_inferred_p0, data$transferred_out_p0)
 transferred + droppedout = all
+
+Is it possible that enrfay is related to both dropout and transfer? 
+Not the case. 
+table(data$enrfay_school, data$dropout_inferred_p0, data$transferred_out_p0)
+
+There is a vaiable withdrawal_data_p0 which we have not consider. Let us look at this. 
+df_withdraw <- data %>% 
+  select(withdrawal_date_p0, dropout_inferred_p0, transferred_out_p0, enrfay_school) %>% 
+  mutate(withdrawal_p0 = !is.na(withdrawal_date_p0))
+
+table(df_withdraw$transferred_out_p0, df_withdraw$withdrawal_p0)
+table(df_withdraw$enrfay_school, df_withdraw$withdrawal_p0,df_withdraw$dropout_inferred_p0)
