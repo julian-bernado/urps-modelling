@@ -1,0 +1,122 @@
+In this file we explore the variable `enrfay`
+`enrfay` related variables in our dataset:
+`enrfay_district`, `enrfay_school`, `enrfay_state`
+For now we are interested in `enrfay_school` and its relationship with other variables.
+
+Unfortunately we failed to find a direct relationship. 
+
+
+
+# Load data
+```{R}
+set.seed(489)
+library(readr)
+library(dplyr)
+library(ggplot2)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+unique_schools <- unique(data$schoolid_nces_enroll_p0)
+schools_sampled <- sample(unique_schools, size = round(0.3 * length(unique_schools)))
+df <- data %>% 
+  filter(schoolid_nces_enroll_p0 %in% schools_sampled)
+```
+
+# Look at overall distribution of `enrfay_school`
+We do not see patterns for `enrfay_school` not equal to 1. 
+```{R}
+table(df$enrfay_school)
+```
+
+# Look at `enrfay_school` across different `gradelevel`. 
+We see the distribution of `enrfay_school` is consistent across different grades. 
+```{r}
+df %>% 
+  select(enrfay_school,gradelevel) %>% 
+  group_by(enrfay_school, gradelevel) %>% 
+  summarize(n=n())
+```
+
+One question is whether `enrfay_school` is related to `dropout_inferred_m1` or `dropout_inferred_p0`. 
+We guess that if one student dropped out from school at some point in the school, their enrollment status would change. Thus those should be related. And `enrfay_school` should be related to `p0`. 
+
+# Look at `dropout_inferred_m1`
+This variable does not seem helpful. We only have 0 and NA values. 
+```{R}
+table(df$dropout_inferred_m1)
+```
+
+# Look at `enrfay_school` and `dropout_inferred_p0`
+This does not make sense since we don't expect a student who dropped out enrolled in 100 percent of time. 
+```{r}
+table(df$enrfay_school, df$dropout_inferred_p0)
+```
+
+
+
+
+
+We want to explain this to help modeling. Now we find some interesting target variables.
+`enrfay_district`, `enrfay_state`, `migrant_now`, 
+`homeless_now`, `attend_p0`, `withdrawal_date_p0`, 
+`persist_inferred_p0`, `transferred_out_p0`, `chronic_absentee_p0`
+
+
+# `enrfay_state` & `enrfay_district`
+`enrfay_school` vs `enrfay_state` & `enrfay_district` makes perfect sense. 
+```{R}
+table(df$enrfay_school, df$enrfay_district)
+table(df$enrfay_school, df$enrfay_state)
+```
+
+# `migrant_now`
+No too much new information. We do see for `migrant_now` = 1, there's less proportion of `dropout_inferred_p0` = 1.
+```{r}
+table(df$enrfay_school, df$migrant_now)
+table(df$dropout_inferred_p0, df$migrant_now)
+table(df$enrfay_school,df$dropout_inferred_p0,df$migrant_now)
+```
+
+# `homeless_now`
+No too much new information
+```{r}
+table(df$enrfay_school, df$homeless_now)
+table(df$dropout_inferred_p0, df$homeless_now)
+table(df$enrfay_school,df$dropout_inferred_p0,df$homeless_now)
+```
+
+# `attend_p0`
+No too much new information
+```{r}
+table(df$enrfay_school, round(df$attend_p0,1))
+table(df$dropout_inferred_p0, round(df$attend_p0,1))
+table(df$enrfay_school,df$dropout_inferred_p0,round(df$attend_p0,1))
+```
+
+# `withdrawal_date_p0`
+```{r}
+table(df$enrfay_school, !is.na(df$withdrawal_date_p0))
+table(df$dropout_inferred_p0, !is.na(df$withdrawal_date_p0))
+table(df$enrfay_school,df$dropout_inferred_p0,!is.na(df$withdrawal_date_p0))
+```
+
+#`persist_inferred_p0`
+`dropout_inferred_p0` = 1 - `persist_inferred_p0`
+```{r}
+table(df$enrfay_school, df$persist_inferred_p0)
+table(df$dropout_inferred_p0, df$persist_inferred_p0)
+table(df$enrfay_school,df$dropout_inferred_p0,df$persist_inferred_p0)
+```
+
+#`transferred_out_p0`
+If `transferred_out_p0` != 0, `dropout_inferred_p0` = 0. 
+```{r}
+table(df$enrfay_school, df$transferred_out_p0)
+table(df$dropout_inferred_p0, df$transferred_out_p0)
+table(df$enrfay_school,df$dropout_inferred_p0,df$transferred_out_p0)
+```
+
+#`chronic_absentee_p0`
+```{r}
+table(df$enrfay_school, df$chronic_absentee_p0)
+table(df$dropout_inferred_p0, df$chronic_absentee_p0)
+table(df$enrfay_school,df$dropout_inferred_p0,df$chronic_absentee_p0)
+```
