@@ -111,6 +111,8 @@ G3_R[["mod9"]] <- lmer(readng_scr_p0 ~
                          homeless_now + migrant_now  + attend_p0_d1 +
                          (1 | schoolid_nces_enroll_p0), data = df)
 
+
+#################################################################################
 G3_R_Sum <- list()
 
 for(i in seq_along(G3_R)) {
@@ -131,6 +133,8 @@ bic_values
 
 mse_values <- sapply(G3_R_Sum, function(x) x$MSE)
 mse_values
+#################################################################################
+
 
 # Get fitted values and residuals
 fitted_values <- fitted(G3_R[["mod9"]])  # replace fit_model with your model name
