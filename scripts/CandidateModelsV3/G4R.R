@@ -28,6 +28,13 @@ df <- data %>%
          attend_p0_d1 = round(attend_p0, 1),
          attend_m1_d1 = round(attend_m1, 1)) %>% 
   filter(!is.na(readng_scr_m1), !is.na(glmath_scr_m1))
+
+df_scaled <- df
+predictors_noscale <- c('districtid_nces_enroll_m1', 'districtid_nces_enroll_p0', 
+                        'schoolid_nces_enroll_m1', 'schoolid_nces_enroll_p0','gradelevel')
+# Assuming predictors_noscale is a vector of column names you don't want to scale
+df_scaled[ , setdiff(names(df), predictors_noscale)] <- scale(df[ , setdiff(names(df), predictors_noscale)])
+
 ################################################################################
 
 G4R <- list()
@@ -77,7 +84,19 @@ G4R[["mod6"]] <- lmer(readng_scr_p0 ~ attend_m1_d1 + attend_p0_d1 + poly(glmath_
                       + specialed_now + enrfay_school + transferred_out_p0 
                       + chronic_absentee_p0 + readng_lan_p0 +  persist_inferred_p0 
                       + (1 | schoolid_nces_enroll_p0), data = df)
+# Scaled model
+G4R[["mod7"]] <- lmer(readng_scr_p0 ~ attend_m1_d1 + attend_p0_d1 + poly(glmath_scr_m1, 3)
+                      + poly(readng_scr_m1,3) + gender + raceth + frl_now 
+                      + specialed_now + enrfay_school + transferred_out_p0 
+                      + chronic_absentee_p0 + readng_lan_p0 +  persist_inferred_p0 
+                      + (1 | schoolid_nces_enroll_p0), data = df_scaled)
 
+G4R[["mod8"]] <- lmer(readng_scr_p0 ~ attend_m1_d1 + attend_p0_d1 + poly(glmath_scr_m1, 3)
+                      + poly(readng_scr_m1,3) + gender + raceth + frl_now 
+                      + specialed_now + enrfay_school + transferred_out_p0 
+                      + chronic_absentee_p0 + readng_lan_p0 +  persist_inferred_p0 +migrant_now 
+                      + homeless_now + specialed_now + lep_now
+                      + (1 | schoolid_nces_enroll_p0), data = df)
 #################################################################################
 
 G4R_Sum <- list()
@@ -102,9 +121,24 @@ mse_values <- sapply(G4R_Sum, function(x) x$MSE)
 mse_values
 
 #################################################################################
-sampled_df <- df[sample(nrow(df), 10000), ]
+# sampled_df <- df[sample(nrow(df), 10000), ]
+# 
+# ggplot(sampled_df, aes(x = glmath_scr_m1, y = readng_scr_p0)) +
+#   geom_hex(bins = 50) +                       
+#   geom_smooth(method = "loess", se = FALSE, color = "red") +
+#   labs(title = "Current vs Past score (smoothed)")
 
-ggplot(sampled_df, aes(x = glmath_scr_m1, y = readng_scr_p0)) +
-  geom_hex(bins = 50) +                       
-  geom_smooth(method = "loess", se = FALSE, color = "red") +
-  labs(title = "Current vs Past score (smoothed)")
+model_data <- G4R[["mod6"]]@frame
+scaled_predictions <- predict(G4R[["mod7"]])
+
+
+mean<- mean(model_data$readng_scr_p0, na.rm = TRUE)
+sd <- sd(model_data$readng_scr_p0, na.rm = TRUE)
+
+original_predictions <- (scaled_predictions * sd) + mean
+
+mse <- mean((model_data$readng_scr_p0 - original_predictions)^2)
+
+print(mse)
+
+
