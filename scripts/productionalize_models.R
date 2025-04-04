@@ -23,7 +23,7 @@ for (setting_name in names(all_formulas)) {
     fit <- lmer(form, data = df, REML = FALSE)
 
     pred_vals <- predict(fit)
-    if (TRUE) {
+    if (grepl("math", setting_name)) {
       obs_vals <- df$glmath_scr_p0
     } else {
       obs_vals  <- df$readng_scr_p0
