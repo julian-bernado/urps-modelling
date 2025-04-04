@@ -28,7 +28,7 @@ library(lme4)
 library(purrr)
 data <- read_csv("/home/rstudio/TEA_2019.csv")
 unique_schools <- unique(data$schoolid_nces_enroll_p0)
-schools_sampled <- sample(unique_schools, size = round(0.3 * length(unique_schools)))
+schools_sampled <- sample(unique_schools, size = round(0.1 * length(unique_schools)))
 
 df <- data %>% 
   filter(schoolid_nces_enroll_p0 %in% schools_sampled) %>% 
@@ -42,7 +42,7 @@ df <- data %>%
             'glmath_alt_scr_m1', 'glmath_alt_scr_p0')) %>% 
   select(-c('replacement_id', 'acadyear')) %>% 
   # Remove those didn't have exam scores
-  filter(!is.na(glmath_scr_p0), !(glmath_scr_p0 == 1043), gradelevel == 8, !is.na(glmath_scr_m1)) %>% 
+  filter(!is.na(glmath_scr_p0), gradelevel == 8, !is.na(glmath_scr_m1)) %>% 
   mutate(age_int = round(age))
 ################################################################################
 G8M <- list()
@@ -54,11 +54,18 @@ G8M[["mod0"]] <- lmer(glmath_scr_p0 ~ poly(glmath_scr_m1,3)
                       + (1 | schoolid_nces_enroll_p0), data = df)
 G8M[["mod1"]] <- lmer(glmath_scr_p0 ~ poly(glmath_scr_m1,3)
                       + gender + raceth + enrfay_school + age
-                      + attend_m1 + attend_p0
-                      + lep_now + transferred_out_p0 + chronic_absentee_p0 + glmath_lan_p0 +  persist_inferred_p0 
-                      + frl_now + specialed_now  + migrant_now + homeless_now + specialed_now 
+                      + lep_now + transferred_out_p0 + chronic_absentee_p0  +  persist_inferred_p0 
+                      + frl_now  + migrant_now + homeless_now + specialed_now 
                       + (1 | schoolid_nces_enroll_p0), data = df)
 
+################################################################################
+# Robust method
+library(robustlmm)
+G8M[["mod2"]] <- rlmer(glmath_scr_p0 ~ glmath_scr_m1 + 
+                      + gender + raceth + enrfay_school + age
+                      + lep_now + transferred_out_p0 + chronic_absentee_p0  +  persist_inferred_p0 
+                      + frl_now  + migrant_now + homeless_now + specialed_now 
+                      + (1 | schoolid_nces_enroll_p0), data = df)
 
 
 
@@ -85,6 +92,8 @@ mse_values
 
 
 
+
+################################################################################
 
 model_data <- G8M[["mod0"]]@frame
 scaled_predictions <- predict(G8M[["mod1"]])
@@ -148,3 +157,5 @@ lmer(scale(readng_scr_p0) ~ poly(scale(readng_scr_m1),3)
   
 nrow(data[data$glmath_scr_p0 == 1043 & !is.na(data$glmath_scr_p0) & data$gradelevel ==8,])
 # [1] 62472
+
+################################################################################
