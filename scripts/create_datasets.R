@@ -51,7 +51,6 @@ columns_of_interest <- c(
   "migrant_ever",
   "persist_inferred_p0",
   "raceth",
-  "schoolid_nces_enroll_p0",
   "specialed_ever",
   "transferred_out_p0"
 )
@@ -118,6 +117,12 @@ if (as.numeric(grade)  > 3) {
 # Use helper function to add in the school-level averages
 df <- df %>% mutate(schoolid_state_enroll_p0 = as.factor(schoolid_state_enroll_p0)) %>% mutate(replacement_id = as.factor(replacement_id))
 df <- df %>% make_grouped(grouping = "schoolid_state_enroll_p0", group_level = c(), unit_level = covariates,  outcome = outcome_var)
+
+# Make `frl_ever` as it was in the original dataset
+# and remove the grouped version
+df <- df %>%
+  mutate(frl_ever = frl_ever + avg_frl_ever) %>%
+  select(-all_of(c("avg_frl_ever")))
 
 # Update the log
 log$grouped_columns <- colnames(df)
