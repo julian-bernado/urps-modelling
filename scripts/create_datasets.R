@@ -35,6 +35,7 @@ log$arguments <- paste("Grade:", grade, "Subject:", subject)
 columns_of_interest <- c(
   outcome_var,
   "gradelevel",
+  "schoolid_state_enroll_p0",
   "age",
   "attend_p0",
   "chronic_absentee_p0",
