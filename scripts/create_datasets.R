@@ -34,6 +34,7 @@ log$arguments <- paste("Grade:", grade, "Subject:", subject)
 # Pull in the dataset
 columns_of_interest <- c(
   outcome_var,
+  "gradelevel",
   "age",
   "attend_p0",
   "chronic_absentee_p0",
