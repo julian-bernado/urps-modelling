@@ -34,8 +34,10 @@ one_hot <- function(data, vars){
     one_hots_only <- data %>% select(all_of(vars))
     for(var in vars){
         unique_vals <- one_hots_only %>% pull(var) %>% unique()
-        for(val in unique_vals){
-            newvarname <- paste0(var, "_", val)
+        n_unique_vals <- length(unique_vals)
+        for(i in 1:n_unique_vals){
+            val <- unique_vals[i]
+            newvarname <- paste0(var, "_", i)
             data <- data %>% mutate(!!newvarname := ifelse(.data[[var]] == val, 1, 0))
         }
         data <- data %>% select(-all_of(var))
@@ -44,9 +46,9 @@ one_hot <- function(data, vars){
     return(data)
 }
 
-make_grouped <- function(data, grouping = "Group", group_level, unit_level, outcome = "Y") {
+make_grouped <- function(data, grouping = "Group", group_level, unit_level) {
   # Combine all relevant covariates including the outcome
-  all_covars <- c(grouping, group_level, unit_level, outcome)
+  all_covars <- c(grouping, group_level, unit_level)
   
   # Check if all specified columns exist in the data
   missing_cols <- setdiff(all_covars, names(data))

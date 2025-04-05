@@ -1,0 +1,356 @@
+
+
+
+
+Covariates:
+```{r}
+glmath3 <- c(final_formulas$glmath3)
+
+
+```
+
+For all of these models, if they did not include race or ethnicity, we add them at the end.
+```{r}
+glmath3 <- c(
+  "enrfay_school",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "chronic_absentee_p0_2",
+  "chronic_absentee_m1_2",
+  "raceth_2",
+  "raceth_4",
+  "raceth_5",
+  "raceth_6",
+  "raceth_7",
+  "avg_enrfay_school",
+  "avg_specialed_ever_2",
+  "avg_chronic_absentee_p0_2",
+  "avg_chronic_absentee_m1_2",
+  "avg_raceth_2",
+  "avg_raceth_4",
+  "avg_raceth_5",
+  "avg_raceth_6",
+  "avg_raceth_7",
+  "gender_2",
+  "avg_gender_2"
+)
+
+original_to_one_hots$raceth
+
+glmath4 <- c(
+  "ns(glmath_scr_m1, df = 3)",
+  "readng_scr_m1",
+  "age",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "chronic_absentee_p0_2",
+  "chronic_absentee_m1_2",
+  "lep_ever_2",
+  "avg_glmath_scr_m1",
+  "avg_readng_scr_m1",
+  "avg_age",
+  "avg_specialed_ever_2",
+  "avg_chronic_absentee_p0_2",
+  "avg_chronic_absentee_m1_2",
+  "avg_lep_ever_2",
+  "raceth_2",
+  "raceth_3",
+  "raceth_4",
+  "raceth_6",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_3",
+  "avg_raceth_4",
+  "avg_raceth_6",
+  "avg_raceth_7",
+  "gender_2",
+  "avg_gender_2"
+)
+
+glmath5 <- c(
+  "ns(glmath_scr_m1, df = 3)",
+  "readng_scr_m1",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "chronic_absentee_p0_2",
+  "lep_ever_2",
+  "avg_glmath_scr_m1",
+  "avg_readng_scr_m1",
+  "avg_specialed_ever_2",
+  "avg_chronic_absentee_p0_2",
+  "avg_lep_ever_2",
+  "raceth_2",
+  "raceth_3",
+  "raceth_5",
+  "raceth_6",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_3",
+  "avg_raceth_5",
+  "avg_raceth_6",
+  "avg_raceth_7",
+  "gender_2",
+  "avg_gender_2"
+)
+
+glmath6 <- c(
+  "ns(glmath_scr_m1, df = 3)",
+  "readng_scr_m1",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "chronic_absentee_p0_2",
+  "lep_ever_2",
+  "avg_glmath_scr_m1",
+  "avg_readng_scr_m1",
+  "avg_specialed_ever_2",
+  "avg_chronic_absentee_p0_2",
+  "avg_lep_ever_2",
+  "raceth_2",
+  "raceth_4",
+  "raceth_5",
+  "raceth_6",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_4",
+  "avg_raceth_5",
+  "avg_raceth_6",
+  "avg_raceth_7",
+  "gender_2",
+  "avg_gender_2"
+)
+
+glmath7 <- c(
+  "ns(glmath_scr_m1, df = 3)",
+  "readng_scr_m1",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "chronic_absentee_p0_2",
+  "lep_ever_2",
+  "avg_glmath_scr_m1",
+  "avg_readng_scr_m1",
+  "avg_specialed_ever_2",
+  "avg_chronic_absentee_p0_2",
+  "avg_lep_ever_2",
+  "raceth_2",
+  "raceth_4",
+  "raceth_5",
+  "raceth_3",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_4",
+  "avg_raceth_5",
+  "avg_raceth_3",
+  "avg_raceth_7",
+  "gender_2",
+  "avg_gender_2"
+)
+
+glmath8 <- c(
+  "ns(glmath_scr_m1, df = 3)",
+  "readng_scr_m1",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "chronic_absentee_p0_2",
+  "lep_ever_2",
+  "avg_glmath_scr_m1",
+  "avg_readng_scr_m1",
+  "avg_specialed_ever_2",
+  "avg_chronic_absentee_p0_2",
+  "avg_lep_ever_2",
+  "raceth_2",
+  "raceth_4",
+  "raceth_5",
+  "raceth_6",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_4",
+  "avg_raceth_5",
+  "avg_raceth_6",
+  "avg_raceth_7",
+  "gender_2",
+  "avg_gender_2"
+)
+
+readng3 <- c(
+  "enrfay_school",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "transferred_out_p0_2",
+  "transferred_out_p0_3",
+  "gender_2",
+  "raceth_2",
+  "raceth_4",
+  "raceth_5",
+  "raceth_6",
+  "raceth_7",
+  "avg_enrfay_school",
+  "avg_specialed_ever_2",
+  "avg_transferred_out_p0_2",
+  "avg_transferred_out_p0_3",
+  "avg_gender_2",
+  "avg_raceth_2",
+  "avg_raceth_4",
+  "avg_raceth_5",
+  "avg_raceth_6",
+  "avg_raceth_7",
+  "gender_2",
+  "avg_gender_2"
+)
+
+readng4 <- c(
+  "ns(readng_scr_m1, df = 3)",
+  "enrfay_state",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "gender_2",
+  "avg_readng_scr_m1",
+  "avg_enrfay_state",
+  "avg_specialed_ever_2",
+  "avg_gender_2",
+  "raceth_2",
+  "raceth_3",
+  "raceth_4",
+  "raceth_6",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_3",
+  "avg_raceth_4",
+  "avg_raceth_6",
+  "avg_raceth_7"
+)
+
+readng5 <- c(
+  "ns(readng_scr_m1, df = 3)",
+  "enrfay_state",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "gender_2",
+  "avg_readng_scr_m1",
+  "avg_enrfay_state",
+  "avg_specialed_ever_2",
+  "avg_gender_2",
+  "raceth_2",
+  "raceth_3",
+  "raceth_5",
+  "raceth_6",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_3",
+  "avg_raceth_5",
+  "avg_raceth_6",
+  "avg_raceth_7"
+)
+
+readng6 <- c(
+  "ns(readng_scr_m1, df = 3)",
+  "glmath_scr_m1",
+  "age",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "chronic_absentee_p0_2",
+  "lep_ever_2",
+  "gender_2",
+  "readng_lan_m1_3",
+  "readng_lan_m1_4",
+  "avg_readng_scr_m1",
+  "avg_glmath_scr_m1",
+  "avg_age",
+  "avg_specialed_ever_2",
+  "avg_chronic_absentee_p0_2",
+  "avg_lep_ever_2",
+  "avg_gender_2",
+  "avg_readng_lan_m1_3",
+  "avg_readng_lan_m1_4",
+  "raceth_2",
+  "raceth_4",
+  "raceth_5",
+  "raceth_6",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_4",
+  "avg_raceth_5",
+  "avg_raceth_6",
+  "avg_raceth_7"
+)
+
+readng7 <- c(
+  "ns(readng_scr_m1, df = 3)",
+  "glmath_scr_m1",
+  "age",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "chronic_absentee_p0_2",
+  "chronic_absentee_m1_2",
+  "lep_ever_2",
+  "gender_2",
+  "avg_readng_scr_m1",
+  "avg_glmath_scr_m1",
+  "avg_age",
+  "avg_specialed_ever_2",
+  "avg_chronic_absentee_p0_2",
+  "avg_chronic_absentee_m1_2",
+  "avg_lep_ever_2",
+  "avg_gender_2",
+  "raceth_2",
+  "raceth_4",
+  "raceth_5",
+  "raceth_6",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_4",
+  "avg_raceth_5",
+  "avg_raceth_6",
+  "avg_raceth_7"
+)
+
+readng8 <- c(
+  "ns(readng_scr_m1, df = 3)",
+  "glmath_scr_m1",
+  "age",
+  "enrfay_school",
+  "frl_ever_2",
+  "specialed_ever_2",
+  "chronic_absentee_p0_2",
+  "chronic_absentee_m1_2",
+  "lep_ever_2",
+  "avg_readng_scr_m1",
+  "avg_glmath_scr_m1",
+  "avg_age",
+  "avg_enrfay_school",
+  "avg_specialed_ever_2",
+  "avg_chronic_absentee_p0_2",
+  "avg_chronic_absentee_m1_2",
+  "avg_lep_ever_2",
+  "raceth_2",
+  "raceth_4",
+  "raceth_5",
+  "raceth_3",
+  "raceth_7",
+  "avg_raceth_2",
+  "avg_raceth_4",
+  "avg_raceth_5",
+  "avg_raceth_3",
+  "avg_raceth_7",
+  "gender_2",
+  "avg_gender_2"
+)
+
+```
+
+```{r}
+final_models$glmath6
+final_models$glmath7
+final_models$glmath8
+```
+
+```{r}
+model5_form <- paste0(as.character(formula(final_models$glmath5))[2], " ~ ", as.character(formula(final_models$glmath5))[3])
+alt_glmath6 <- lmer(model5_form, data = df_list[["6"]], REML = FALSE)
+alt_glmath7 <- lmer(model5_form, data = df_list[["7"]], REML = FALSE)
+alt_glmath8 <- lmer(model5_form, data = df_list[["8"]], REML = FALSE)
+```
+
+
+```{r}
+final_models
+```

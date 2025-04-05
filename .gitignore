@@ -1,1 +1,6 @@
+models/
+evals/
+formulas/
+
+.rds
 .DS_Store
