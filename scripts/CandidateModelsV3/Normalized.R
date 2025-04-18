@@ -44,7 +44,7 @@ all_scaled <- lmer(readng_scr_p0 ~ attend_m1_d1 + attend_p0_d1 + poly(glmath_scr
                       + poly(readng_scr_m1,3) + gender + raceth + frl_now 
                       + specialed_now + enrfay_school + transferred_out_p0 
                       + chronic_absentee_p0 + readng_lan_p0 +  persist_inferred_p0 
-                      + (1 | schoolid_nces_enroll_p0), data = df_scaled)
+                      + (1 | schoolid_nces_enroll_p0), data = df_scaled, REML = FALSE)
 
 AIC(all_scaled) # 209107
 BIC(all_scaled) # 209299.3
@@ -54,7 +54,7 @@ con_scaled <- lmer(scale(readng_scr_p0) ~ scale(attend_m1_d1) + attend_p0_d1 + p
                    + poly(scale(readng_scr_m1,3)) + gender + raceth + frl_now 
                    + specialed_now + enrfay_school + transferred_out_p0 
                    + chronic_absentee_p0 + readng_lan_p0 +  persist_inferred_p0 
-                   + (1 | schoolid_nces_enroll_p0), data = df)
+                   + (1 | schoolid_nces_enroll_p0), data = df,REML = FALSE)
 
 AIC(con_scaled) # 212771.9
 BIC(con_scaled) # 212944.9
