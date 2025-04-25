@@ -90,7 +90,7 @@ From the summaries, it seem every category variable in the list has some impact 
 ```{r}
 ggplot(df, aes(x = readng_scr_m1, y = readng_scr_p0)) +
   geom_hex(bins = 50) +                       
-  geom_smooth(method = "loess", se = FALSE, color = "red") +                           # or your categorical factor
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
   labs(title = "Current vs Past score (smoothed)")
 ```
 We see past year reading score and present year reading score are nonlinearly related. This also indicates the usage of polynomial terms/spines.     
