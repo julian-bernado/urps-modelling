@@ -13,7 +13,11 @@ df <- create_dataset(data)
 dfs <- clean_dataset(df)
 
 c_mod_list <- create_candidate_mod_list()
-colnames(dfs[["df_3_r"]])
+colnames(dfs[["df_4_r"]])
+get_var_summary_list(dfs[["df_4_r"]])
+
+
+
 
 
 candidate_vars <- c("frl_ever", 
