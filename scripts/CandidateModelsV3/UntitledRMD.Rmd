@@ -1,0 +1,106 @@
+```{R message=FALSE, warning=FALSE}
+source("~/urps-modelling/scripts/Z_helpers.R")
+
+library(readr)
+library(dplyr)
+library(lme4)
+library(purrr)
+library(ggplot2)
+library(stringr)
+library(splines)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+
+df <- create_dataset(data)
+dfs <- clean_dataset(df)
+
+c_mod_list <- create_candidate_mod_list()
+colnames(dfs[["df_3_r"]])
+
+
+candidate_vars <- c("frl_ever", 
+                   "lep_ever", 
+                   "migrant_ever", 
+                   "homeless_ever", 
+                   "specialed_ever",
+                   "chronic_absentee_p0", 
+                   "readng_ver_m1")
+
+fixed_vars <- c("readng_scr_m1",
+                "gender",
+                "raceth")
+
+start_time <- Sys.time()
+create_candidate_mod(candidate_vars, fixed_vars, "r", 4)
+end_time <- Sys.time()
+
+print(end_time - start_time)
+```
+
+```{R}
+aic_values <- map_dbl(c_mod_list[["c_mod_4_r"]], AIC)
+bic_values <- map_dbl(c_mod_list[["c_mod_4_r"]], BIC)
+mse_values <- map_dbl(c_mod_list[["c_mod_4_r"]], function(model) {
+  preds <- predict(model)
+  truth <- model@frame[[1]]
+  mean((preds - truth)^2)
+})
+
+# Combine everything nicely into a tibble
+comparison_table <- tibble(
+  model_id = seq_along(c_mod_list[["c_mod_4_r"]]),
+  AIC = aic_values,
+  BIC = bic_values,
+  MSE = mse_values
+)
+
+# Sort by AIC (best models first)
+comparison_table <- comparison_table %>% arrange(AIC)
+
+comparison_table
+```
+
+```{R}
+best_model_id <- comparison_table$model_id[which.min(comparison_table$AIC)]
+
+best_model <- c_mod_list[["c_mod_4_r"]][[best_model_id]]
+
+summary(best_model)
+
+```
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# comparison_table should look like:
+# model_id | AIC | BIC | MSE
+
+# Step 1: No need to arrange or mutate rank
+# Just pivot longer
+plot_data <- comparison_table %>%
+  pivot_longer(cols = c(AIC, BIC, MSE), names_to = "metric", values_to = "value")
+plot_aic <- plot_data %>%
+  filter(metric == "AIC") %>%
+  ggplot(aes(x = model_id, y = value)) +
+  geom_line(color = "steelblue") +
+  geom_point(color = "steelblue") +
+  labs(
+    title = "AIC across Models",
+    x = "Model ID",
+    y = "AIC Value"
+  ) +
+  theme_minimal()
+plot_aic
+plot_mse <- plot_data %>%
+  filter(metric == "MSE") %>%
+  ggplot(aes(x = model_id, y = value)) +
+  geom_line(color = "forestgreen") +
+  geom_point(color = "forestgreen") +
+  labs(
+    title = "MSE across Models",
+    x = "Model ID",
+    y = "MSE Value"
+  ) +
+  theme_minimal()
+plot_mse
+```
