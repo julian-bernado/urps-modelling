@@ -48,18 +48,18 @@ clean_dataset <- function(data){
   return(dfs)
 }
 
-get_var_summary <- function(var){
-  df %>% 
+get_var_summary <- function(var, data1){
+  data1 %>% 
     group_by(!!sym(var)) %>% 
-    summarize(mean(readng_scr_p0), 
-              median(readng_scr_p0),
+    summarize(mean(readng_scr_p0, na.rm = T), 
+              median(readng_scr_p0, na.rm = T),
               count = n(),
-              proportion = n()/nrow(df))
+              proportion = n()/nrow(data1))
 }
 
 get_var_summary_list <- function(df){
-  vars <- names(df)[sapply(df, function(x) length(unique(x)) < 10)]
-  summary_list <- map(vars, get_summary)
+  vars <- names(df)[sapply(df, function(x) length(unique(x)) < 15)]
+  summary_list <- map(vars, ~get_var_summary(var = .x, data1 = df))
   return(summary_list)
 }
 

@@ -17,13 +17,16 @@ c_mod_list <- create_candidate_mod_list()
 colnames(dfs[["df_3_r"]])
 
 
-candidate_vars <- c("frl_ever", 
-                   "lep_ever", 
-                   "migrant_ever", 
-                   "homeless_ever", 
-                   "specialed_ever",
-                   "chronic_absentee_p0", 
-                   "readng_ver_m1")
+candidate_vars <- c("frl_ever",
+                    "lep_ever",
+                    "attend_p0_d1",
+                    "specialed_ever",
+                    "transferred_out_p0",
+                    "enrfay_school",
+                    "chronic_absentee_p0",
+                    "homeless_ever",
+                    "persist_inferred_p0",
+                    "migrant_ever")
 
 fixed_vars <- c("readng_scr_m1",
                 "gender",
@@ -61,11 +64,8 @@ comparison_table
 
 ```{R}
 best_model_id <- comparison_table$model_id[which.min(comparison_table$AIC)]
-
 best_model <- c_mod_list[["c_mod_4_r"]][[best_model_id]]
-
 summary(best_model)
-
 ```
 ```{r}
 library(dplyr)
