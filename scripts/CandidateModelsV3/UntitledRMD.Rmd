@@ -57,10 +57,26 @@ comparison_table <- tibble(
 )
 
 # Sort by AIC (best models first)
-comparison_table <- comparison_table %>% arrange(AIC)
-
+comparison_table %>% arrange(AIC)
+comparison_table %>% arrange(BIC)
+comparison_table %>% arrange(MSE)
 comparison_table
 ```
+
+# AIC top 10
+# 968, 1013, 1014, 1023, 848, 969, 970, 1015, 858, 978
+
+# BIC top 10
+# 848, 968, 643, 858, 969, 970, 1013,1014,859, 860
+
+# MSE top 10
+# 1014, 1023, 968, 1013, 970, 1015, 848, 969, 1018, 978
+
+# We choose 968
+968	1329623	1329757	9778.403
+
+readng_scr_p0 ~ readng_scr_m1 + gender + raceth + 
+frl_ever + lep_ever + attend_pO_d1 + specialed_ever + transferred_out_pO + enrfay_school + chronic_absentee_p0 + homeless_ever 
 
 ```{R}
 best_model_id <- comparison_table$model_id[which.min(comparison_table$AIC)]
