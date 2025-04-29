@@ -17,8 +17,8 @@ This file produces outcomes in paper Prognostic Modeling with Texas Education Da
 
 1. Data preprocessing
 2. Identify Potential important variable
-3. Build simple models
-4. Select the best simple model
+3. First Stage Best Subset Selection
+4. Second Stage Best Subset Selection
 5. Normalization
 6. Splines
 7. Best Model for Grade 5 Reading
@@ -109,6 +109,7 @@ clean_dataset <- function(data){
 }
 ```
 
+Now we use the functions to create dataframes. 
 ```{r}
 df <- create_dataset(data)
 dfs <- clean_dataset(df)
@@ -272,10 +273,10 @@ fixed_vars_1 <- c("readng_scr_m1",
                 "gender",
                 "raceth")
 c_mod_list <- create_candidate_mod_list()
-create_candidate_mod(candidate_vars_1, fixed_vars_1, "r", 5)
+c_mod_list <- create_candidate_mod(candidate_vars_1, fixed_vars_1, "r", 5,c_mod_list)
 ```
 
-Now we have 2^10 - 1, which is 1023 models. We want to choose the best model. The best model is chosen by AIC/BIC/MSE values. However, those three criteria do not always agree on the best model. As a compromise, we take the mean of their rank, and select the best model. 
+Now we have 2^10, which is 1024 models. We want to choose the best model. The best model is chosen by AIC/BIC/MSE values. However, those three criteria do not always agree on the best model. As a compromise, we take the top 50 models based on MSE first, then take the mean of AIC and BIC rank to select the best model. The motivation is that MSE prefers complexity, we don't want our model gets too complexed. Choosing top 50 based on MSE first to make sure the MSEs are not too further away. 
 
 ```{R}
 #' Function to generate candidate models for a given subject and grade
@@ -322,11 +323,14 @@ model_selection <- function(grade, subject, list1){
 ```{r}
 model_selection(5, "r",c_mod_list)
 ```
+```{R}
+summary(c_mod_list[["c_mod_5_r"]][[849]])
+```
 The comparison table tells us that model 849 is the best model. The formula for it is readng_scr_p0 ~ readng_scr_m1 + gender + raceth + 
 frl_ever +  lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 + enrfay_school + chronic_absentee_p0 + (1 | schoolid_nces_enroll_p0)
 
 # Part 4: Second Stage Best Subset Selection
-Now we have the best simple model from fixed variables and group 1. We now treat the variables in the best simple model as the fixed variables, and so a best subset selection over group 2. 
+Now we have the best simple model from fixed variables and group 1. We now treat the variables in the best simple model as the fixed variables, and so a best subset selection over group 2. Note this time we only have 32 models, that means we are only looking at AIC/BIC this time. 
 Fixed variables: 
 readng_scr_m1 + gender + raceth + frl_ever +  lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 + enrfay_school + chronic_absentee_p0
 Group 2:
@@ -357,6 +361,9 @@ c_mod_list_2 <- create_candidate_mod(candidate_vars_2, fixed_vars_2, "r", 5, c_m
 ```
 ```{r}
 model_selection(5, "r", c_mod_list_2)
+```
+```{R}
+summary(c_mod_list_2[["c_mod_5_r"]][[14]])
 ```
 We see the best model is model 14. And its formula is 
 readng_scr_m1 + gender + raceth + frl_ever + lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  enrfay_school + chronic_absentee_p0 + chronic_absentee_m1 +  readng_lan_m1
@@ -489,7 +496,6 @@ ggplot(mse_df, aes(x = Model, y = MSE, group = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```  
 
-
 # Part 7: Best Model for Grade 5 Reading    
 So based on our analysis, the best model we have for grade 5 reading is 
 scale(readng_scr_p0) ~ ns(scale(readng_scr_m1),3) 
@@ -498,7 +504,19 @@ scale(readng_scr_p0) ~ ns(scale(readng_scr_m1),3)
                       +  enrfay_school + chronic_absentee_p0 
                       + chronic_absentee_m1 +  readng_lan_m1
                       + (1 | schoolid_nces_enroll_p0)
-
+```{R}
+best_model_5_r <- lmer(scale(readng_scr_p0) ~ ns(scale(readng_scr_m1),3) 
+                                      + gender + raceth + frl_ever + lep_ever
+                                      + attend_p0_d1 + specialed_ever + transferred_out_p0 
+                                      +  enrfay_school + chronic_absentee_p0 
+                                      + chronic_absentee_m1 +  readng_lan_m1
+                                      + (1 | schoolid_nces_enroll_p0), 
+                                      data = dfs[["df_5_r"]], REML = FALSE)
+summary(best_model_5_r)
+cat("\nThe AIC of the best model is ", AIC(best_model_5_r))
+cat("\nThe BIC of the best model is ", BIC(best_model_5_r))
+cat("\nThe MSE of the best model is ", mean(residuals(best_model_5_r)^2))
+```
 
                       
 # Part 8: Extremely Low Math Scores   
@@ -506,12 +524,8 @@ One worth-noting pattern in our data is extremely low math scores for students i
 Here's a histogram show the pattern. 
 Grade 6 math score distribution: 
 ```{R}
-data_sampled <- data %>% 
-  filter(schoolid_nces_enroll_p0 %in% schools_sampled)  %>% 
-  select(gradelevel, glmath_scr_p0) %>% 
-  na.omit()
 for(i in 3:8){
-  p <- data_sampled %>%
+  p <- data %>%
     filter(gradelevel == i) %>%
     ggplot(aes(x = glmath_scr_p0)) +
     geom_histogram(bins = 100) +
