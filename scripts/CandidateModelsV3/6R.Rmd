@@ -1,0 +1,108 @@
+```{R message=FALSE, warning=FALSE}
+source("~/urps-modelling/scripts/Z_helpers.R")
+
+library(readr)
+library(dplyr)
+library(lme4)
+library(purrr)
+library(ggplot2)
+library(stringr)
+library(splines)
+candidate_vars <- c("frl_ever",
+                    "lep_ever",
+                    "attend_p0_d1",
+                    "specialed_ever",
+                    "transferred_out_p0",
+                    "enrfay_school",
+                    "chronic_absentee_p0",
+                    "homeless_ever",
+                    "persist_inferred_p0",
+                    "migrant_ever")
+
+fixed_vars <- c("readng_scr_m1",
+                "gender",
+                "raceth")
+for(grade in 6:8){
+  start_time <- Sys.time()
+  create_candidate_mod(candidate_vars, fixed_vars, "r", grade)
+  end_time <- Sys.time()
+  print(end_time - start_time)
+}
+
+```
+```{R}
+aic_values <- map_dbl(c_mod_list[["c_mod_8_r"]], AIC)
+bic_values <- map_dbl(c_mod_list[["c_mod_8_r"]], BIC)
+mse_values <- map_dbl(c_mod_list[["c_mod_8_r"]], function(model) {
+  preds <- predict(model)
+  truth <- model@frame[[1]]
+  mean((preds - truth)^2)
+})
+
+# Combine everything nicely into a tibble
+comparison_table <- tibble(
+  model_id = seq_along(c_mod_list[["c_mod_8_r"]]),
+  AIC = aic_values,
+  BIC = bic_values,
+  MSE = mse_values
+)
+comparison_table <- comparison_table %>%
+  mutate(
+    rank_aic = rank(AIC, ties.method = "first"),   # smaller AIC = better
+    rank_bic = rank(BIC, ties.method = "first"),   # smaller BIC = better
+    rank_mse = rank(MSE, ties.method = "first")    # smaller MSE = better
+  )
+comparison_table <- comparison_table %>%
+  mutate(mean_rank = (rank_aic + rank_bic + rank_mse) / 3)
+
+comparison_table %>%
+  arrange(mean_rank)
+
+
+```
+
+#G6
+model_id AIC  BIC MSE rank_aic rank_bic rank_mse mean_rank 
+848	1004587	1004708	10469.41	2	4	7	4.333333
+968	1004587	1004717	10469.23	1	14	3	6.000000
+969	1004589	1004719	10469.40	4	15	5	8.000000
+852	1004593	1004714	10470.20	9	6	11	8.666667
+639	1004593	1004705	10470.40	10	2	15	9.000000
+970	1004589	1004719	10469.42	6	16	8	10.000000
+1013	1004589	1004729	10469.23	3	26	1	10.000000
+858	1004594	1004715	10470.69	11	7	18	12.000000
+1014	1004589	1004729	10469.24	5	27	4	12.000000
+643	1004594	1004706	10470.89	12	3	22	12.333333
+frl_ever +  
+    lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  
+    enrfay_school + chronic_absentee_p0
+#G7
+970	1371040	1371174	14747.41	1	6	4	3.666667
+848	1371043	1371168	14748.17	5	2	9	5.333333
+1014	1371040	1371184	14747.25	2	12	3	5.666667
+1015	1371040	1371184	14747.21	3	13	2	6.000000
+968	1371044	1371178	14748.01	6	7	7	6.666667
+969	1371044	1371178	14747.97	7	8	6	7.000000
+854	1371045	1371170	14748.39	9	3	12	8.000000
+1023	1371041	1371195	14747.06	4	20	1	8.333333
+1013	1371044	1371188	14747.81	8	16	5	9.666667
+639	1371049	1371164	14749.16	13	1	16	10.000000
+
+frl_ever +  
+    lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  
+    enrfay_school + chronic_absentee_p0 + migrant_ever
+#g8
+969	888720.7	888849.6	10033.37	5	6	5	5.333333
+850	888724.3	888843.9	10034.11	8	1	10	6.333333
+971	888721.5	888850.4	10033.48	6	7	6	6.333333
+1013	888718.2	888856.3	10032.77	2	18	2	7.333333
+973	888722.9	888851.8	10033.68	7	11	7	8.333333
+1015	888719.3	888857.4	10032.94	3	20	3	8.666667
+1016	888720.1	888858.2	10033.05	4	24	4	10.666667
+1023	888716.8	888864.1	10032.34	1	30	1	10.666667
+848	888729.9	888849.6	10034.85	15	5	17	12.333333
+968	888727.3	888856.2	10034.24	10	17	11	12.666667
+
+frl_ever +  
+    lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  
+    enrfay_school + chronic_absentee_p0 + persist_inferred_p0
