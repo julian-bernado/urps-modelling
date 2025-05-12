@@ -1,0 +1,52 @@
+```{R message=FALSE, warning=FALSE}
+source("~/urps-modelling/scripts/TentativeBestModels/Z_helpers.R")
+
+library(readr)
+library(dplyr)
+library(lme4)
+library(purrr)
+library(ggplot2)
+library(stringr)
+library(splines)
+library(robustlmm)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+```
+```{r}
+df <- create_dataset(data, sample = 0.1)
+dfs <- clean_dataset(df)
+
+start_time <- Sys.time()
+regular_mod <- lmer(scale(glmath_scr_p0) ~ ns(scale(glmath_scr_m1),4) 
+                      + gender + raceth + frl_ever + lep_ever
+                      + attend_p0_d1 + specialed_ever + transferred_out_p0 
+                      +  enrfay_school + chronic_absentee_p0 
+                      + chronic_absentee_m1 +  glmath_lan_m1
+                      + (1 | schoolid_nces_enroll_p0), 
+                    data = dfs[["df_8_m"]], REML = FALSE)
+print(summary(regular_mod))
+end_time <- Sys.time()
+cat("Time for regular:", end_time - start_time)
+
+
+
+start_time <- Sys.time()
+robust_mod <- rlmer(scale(glmath_scr_p0) ~ ns(scale(glmath_scr_m1),4) 
+                      + gender + raceth + frl_ever + lep_ever
+                      + attend_p0_d1 + specialed_ever + transferred_out_p0 
+                      +  enrfay_school + chronic_absentee_p0 
+                      + chronic_absentee_m1 + glmath_lan_m1
+                      + (1 | schoolid_nces_enroll_p0), 
+                    data = dfs[["df_8_m"]])
+print(summary(robust_mod))
+end_time <- Sys.time()
+cat("Time for robust:", end_time - start_time)
+```
+
+
+0.005.  5s
+0.01.  13s
+0.05.   8mins
+0.1.   1 hour 16mins
+```{R}
+saveRDS(robust_mod, file = "robust8M01.rds")
+```

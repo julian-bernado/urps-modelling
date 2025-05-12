@@ -1,0 +1,432 @@
+---
+title: "JunjieZeng_STATS485_Unit3_Paper_V1"
+author: "Junjie Zeng"
+date: "2025-04-08"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview    
+This file produces outcomes in paper Prognostic Modeling with Texas Education Data. This paper is based on the URPS project in Winter 2025 semester supervised by Prof. Ben Hansen and PhD student Julian Bernado. We used TEA_2019.csv data to model Texas students' math and reading test scores in grade 3-8 in 2019. Caroline Moy collaborated with me on this project. She was in charge of the modeling for grade 6-8 reading scores and grade 3-5 math scores. Since our paper depends on long-running computations, we will show the modeling process only for grade 4 reading scores as the representatives using 30 percent schools in this file. Other models can be built using basically the same way. This file is divided into several parts: 
+
+1. Data preprocessing
+2. Identify Potential important variable
+3. Build simple models
+4. Select the best simple model
+5. Normalization
+6. Splines
+7. Best Model for Grade 4 Reading
+8. Extremely Low Math Scores  
+
+# Part 0: Data Loading    
+Reproduciability
+```{R}
+set.seed(489)
+```
+
+We load the data and necessary packages. 
+```{r}
+library(readr)
+library(dplyr)
+library(lme4)
+library(purrr)
+library(ggplot2)
+library(stringr)
+library(splines)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+```
+# Grade 4 Reading Score Modeling    
+# Part 1: Data preprocessing       
+We clean our data follow the following steps: 
+1. We randomly sample 30 percent of schools to run faster. 
+2. Remove all variables with only NA values. Those variables contains no information. 
+3. Since we don't want to use present math score to model present reading score, we take out all math score variables. We also take out alternative test scores, they are not being modeled for now. We also take out all variables ends with `_midd` because we are modeling primary school students. `replacement_id` and `acadyear` are also irrelevant. 
+4. We filter grade 4 students data and remove NA's. 
+5. We add `age_int` variable, which is the rounded version of `age`. We will treat age as categorical variable rather than continuous variable. Similarly for `attend_p0` and `attend_m1`, percentage of attendance present year/last year. 
+```{R}
+unique_schools <- unique(data$schoolid_nces_enroll_p0)
+schools_sampled <- sample(unique_schools, 
+                          size = round(0.3 * length(unique_schools)))
+df <- data %>% 
+  filter(schoolid_nces_enroll_p0 %in% schools_sampled) %>% 
+  # Remove variables with only NA's
+  select(where(~ !all(is.na(.)))) %>% 
+  select(-c('glmath_ver_p0', 
+            'glmath_lan_p0', 
+            'glmath_scr_p0', 
+            'glmath_alt_scr_m1', 'glmath_alt_scr_p0',
+            'readng_alt_scr_m1', 'readng_alt_scr_p0',
+            'replacement_id', 'acadyear'),-ends_with("_midd")) %>% 
+  # Remove those didn't have exam scores
+  filter(!is.na(readng_scr_p0), !is.na(readng_scr_m1), 
+         !is.na(glmath_scr_m1), gradelevel == 4) %>% 
+  mutate(age_int = round(age), 
+         attend_p0_d1 = round(attend_p0, 1),
+         attend_m1_d1 = round(attend_m1, 1))
+```   
+
+# Part 2: Identify Potential important variable   
+We select categorical variables with number of categories less than 10 and create summary values for them to see whether there's a relatively big difference between categories. 
+```{R}
+vars <- names(df)[sapply(df, function(x) length(unique(x)) < 10)]
+get_summary <- function(var){
+  df %>% 
+  group_by(!!sym(var)) %>% 
+  summarize(mean(readng_scr_p0), 
+            median(readng_scr_p0),
+            count = n(),
+            proportion = n()/nrow(df))
+}
+summary_list <- map(vars, get_summary)
+summary_list
+```
+From the summaries, it seem every category variable in the list has some impact on reading scores. What about continuous variable reading score from last year? 
+```{r}
+ggplot(df, aes(x = readng_scr_m1, y = readng_scr_p0)) +
+  geom_hex(bins = 50) +                       
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Current vs Past score (smoothed)")
+```
+We see past year reading score and present year reading score are nonlinearly related. This also indicates the usage of polynomial terms/spines.     
+
+# Part 3: Simple Models   
+We will use pseudo forward selection to create different models. For each model, we will look at each variables' t-value. If t-value is too small, for example magnitude <1, we remove this variable from this formula. 
+We start with a baseline model with only random effects and intercept as `mod0`. For `mod1` we start with variables that are naturally important for people (`race` and `gender`) and commonly viewed as important for predicting scores (last year score). 
+
+
+```{R warning=FALSE}
+G4_R <- list() 
+
+G4_R[["mod0"]] <- lmer(readng_scr_p0 ~ 1 + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod1"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth 
+                       + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod2"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth + age_int 
+                       + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod3"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth 
+                       + age_int + frl_ever 
+                       + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod4"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth 
+                       + age_int + frl_now 
+                       + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod5"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_now 
+                       + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod6"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_now 
+                       + lep_now + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod7"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_now 
+                       + lep_ever + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod8"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_now 
+                       + specialed_now + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod9"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_now 
+                       + specialed_now + enrfay_school 
+                       + (1 | schoolid_nces_enroll_p0), 
+                       data = df, REML = FALSE)
+
+G4_R[["mod10"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth 
+                        + frl_now + specialed_now + enrfay_state 
+                        + (1 | schoolid_nces_enroll_p0), 
+                        data = df, REML = FALSE)
+
+G4_R[["mod11"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth 
+                        + frl_now + specialed_now + enrfay_school
+                        + transferred_out_p0 + (1 | schoolid_nces_enroll_p0), 
+                        data = df, REML = FALSE)
+
+G4_R[["mod12"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender 
+                        + raceth + frl_now + specialed_now 
+                        + enrfay_school + transferred_out_p0 
+                        +chronic_absentee_m1 + (1 | schoolid_nces_enroll_p0), 
+                        data = df, REML = FALSE)
+
+G4_R[["mod13"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth 
+                        + frl_now + specialed_now + enrfay_school 
+                        + transferred_out_p0 +chronic_absentee_m1 
+                        + readng_lan_p0 + (1 | schoolid_nces_enroll_p0), 
+                        data = df, REML = FALSE)
+
+G4_R[["mod14"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth 
+                        + frl_now + specialed_now + enrfay_school 
+                        + transferred_out_p0 + chronic_absentee_m1 
+                        + readng_lan_p0 + homeless_now 
+                        + (1 | schoolid_nces_enroll_p0), data = df, REML = FALSE)
+
+G4_R[["mod15"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth 
+                        + frl_now + specialed_now + enrfay_school 
+                        + transferred_out_p0 + chronic_absentee_m1 
+                        + readng_lan_p0 + homeless_now + migrant_now 
+                        + (1 | schoolid_nces_enroll_p0), 
+                        data = df, REML = FALSE)
+
+G4_R[["mod16"]] <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth 
+                        + frl_now + specialed_now + enrfay_school 
+                        + transferred_out_p0 + chronic_absentee_m1 
+                        + readng_lan_p0 + homeless_now + migrant_now 
+                        + persist_inferred_p0 + (1 | schoolid_nces_enroll_p0), 
+                        data = df, REML = FALSE)
+```
+```{r}
+for(i in seq_along(G4_R)){
+  print(summary(G4_R[[i]]))
+}
+```   
+# Part 4: Select the best simple Model    
+We'll select the best simple model using AIC, BIC and MSE. The lower the better. 
+We first print out the AIC/BIC/MSE values for all models. 
+```{R}
+G4_R_Sum <- list()
+
+for(i in seq_along(G4_R)) {
+  G4_R_Sum[[i]] <- list(
+    model = G4_R[[i]],
+    AIC = AIC(G4_R[[i]]),
+    BIC = BIC(G4_R[[i]]),
+    MSE = mean(residuals(G4_R[[i]])^2)
+  )
+}
+names(G4_R_Sum) <- names(G4_R)
+
+aic_values <- sapply(G4_R_Sum, function(x) x$AIC)
+aic_values
+
+bic_values <- sapply(G4_R_Sum, function(x) x$BIC)
+bic_values
+
+mse_values <- sapply(G4_R_Sum, function(x) x$MSE)
+mse_values
+```
+We create line plots to visualize how AIC/BIC/MSE change with the increase of variables.    
+```{R}
+aic_df <- data.frame(
+  Model = names(aic_values),
+  AIC = aic_values
+)
+aic_df <- subset(aic_df, Model != "mod0")
+aic_df$Order <- as.numeric(str_extract(aic_df$Model, "\\d+"))
+aic_df <- aic_df[order(aic_df$Order), ]
+aic_df$Model <- factor(aic_df$Model, levels = aic_df$Model)
+
+ggplot(aic_df, aes(x = Model, y = AIC, group = 1)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "AIC Across Models", x = "Model", y = "AIC") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{R}
+bic_df <- data.frame(
+  Model = names(bic_values),
+  BIC = bic_values
+)
+bic_df <- subset(bic_df, Model != "mod0")
+bic_df$Order <- as.numeric(str_extract(bic_df$Model, "\\d+"))
+bic_df <- bic_df[order(bic_df$Order), ]
+bic_df$Model <- factor(bic_df$Model, levels = bic_df$Model)
+ggplot(bic_df, aes(x = Model, y = BIC, group = 1)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "BIC Across Models", x = "Model", y = "BIC") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{R}
+mse_df <- data.frame(
+  Model = names(mse_values),
+  MSE = mse_values
+)
+mse_df <- subset(mse_df, Model != "mod0")
+mse_df$Order <- as.numeric(str_extract(mse_df$Model, "\\d+"))
+mse_df <- mse_df[order(mse_df$Order), ]
+mse_df$Model <- factor(mse_df$Model, levels = mse_df$Model)
+
+ggplot(mse_df, aes(x = Model, y = MSE, group = 1)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "MSE Across Models", x = "Model", y = "MSE") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```   
+Both AIC/BIC/MSE plots indicates that model 13,14,15,16 are better choices. We then choose the simpler model, model 13 as the winner. 
+
+readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_now + specialed_now + enrfay_school + transferred_out_p0 +chronic_absentee_m1 + readng_lan_p0 + (1 | schoolid_nces_enroll_p0)
+
+# Part 5: Normalization   
+In this part, we investigate whether normalization will help with our model. We will use the winner model, model 13, as the control. 
+```{R warning=FALSE}
+unscaled <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_now 
+                 + specialed_now + enrfay_school + transferred_out_p0 
+                 +chronic_absentee_m1 + readng_lan_p0 
+                 + (1 | schoolid_nces_enroll_p0), 
+                 data = df, REML = FALSE)
+
+scaled <- lmer(scale(readng_scr_p0) ~ scale(readng_scr_m1) 
+               + gender + raceth + frl_now + specialed_now 
+               + enrfay_school + transferred_out_p0 
+               +chronic_absentee_m1 + readng_lan_p0 
+               + (1 | schoolid_nces_enroll_p0), 
+               data = df, REML = FALSE)
+
+cat("\nThe AIC for unnormalized model is", AIC(unscaled))
+cat("\nThe AIC for normalized model is", AIC(scaled))
+cat("\nThe BIC for unnormalized model is", BIC(unscaled))
+cat("\nThe BIC for normalized model is", BIC(scaled))
+```
+We see normalization results in a better model. So we update our best model to the normalized one. 
+
+# Part 6: Splines   
+Now we explore the use of spline for our model. 
+`mod0` is without splines, `modi` is has spline of degree i. 
+We create 11 models, first one without any splines, the rest natural splines 1-10.
+```{R}
+splines <- list() 
+splines[['mod0']] <- lmer(scale(readng_scr_p0) ~ ns(scale(readng_scr_m1),i) 
+                          + gender + raceth + frl_now + specialed_now 
+                          + enrfay_school + transferred_out_p0 
+                          +chronic_absentee_m1 + readng_lan_p0 
+                          + (1 | schoolid_nces_enroll_p0), 
+                          data = df, REML = FALSE)
+for(i in 1:10){
+  splines[[paste('mod', i)]] <- lmer(scale(readng_scr_p0) ~ 
+                                       ns(scale(readng_scr_m1),i) 
+                                     + gender + raceth + frl_now 
+                                     + specialed_now + enrfay_school 
+                                     + transferred_out_p0 +chronic_absentee_m1 
+                                     + readng_lan_p0 
+                                     + (1 | schoolid_nces_enroll_p0), 
+                                     data = df, REML = FALSE)
+}
+```
+
+Now like we did before, we get AIC/BIC/MSEs for each mdoel.   
+```{R}
+splines_Sum <- list()
+
+for(i in seq_along(splines)) {
+  splines_Sum[[i]] <- list(
+    model = splines[[i]],
+    AIC = AIC(splines[[i]]),
+    BIC = BIC(splines[[i]]),
+    MSE = mean(residuals(splines[[i]])^2)
+  )
+}
+names(splines_Sum) <- names(splines)
+
+aic_values <- sapply(splines_Sum, function(x) x$AIC)
+aic_values
+
+bic_values <- sapply(splines_Sum, function(x) x$BIC)
+bic_values
+
+mse_values <- sapply(splines_Sum, function(x) x$MSE)
+mse_values
+```
+
+We create line plots to visualize how AIC/BIC/MSE change with the increase of spline degrees.     
+```{R}
+aic_df <- data.frame(
+  Model = names(aic_values),
+  AIC = aic_values
+)
+aic_df <- subset(aic_df, Model != "mod0")
+aic_df$Order <- as.numeric(str_extract(aic_df$Model, "\\d+"))
+aic_df <- aic_df[order(aic_df$Order), ]
+aic_df$Model <- factor(aic_df$Model, levels = aic_df$Model)
+
+ggplot(aic_df, aes(x = Model, y = AIC, group = 1)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "AIC Across Models", x = "Model", y = "AIC") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{R}
+bic_df <- data.frame(
+  Model = names(bic_values),
+  BIC = bic_values
+)
+bic_df <- subset(bic_df, Model != "mod0")
+bic_df$Order <- as.numeric(str_extract(bic_df$Model, "\\d+"))
+bic_df <- bic_df[order(bic_df$Order), ]
+bic_df$Model <- factor(bic_df$Model, levels = bic_df$Model)
+ggplot(bic_df, aes(x = Model, y = BIC, group = 1)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "BIC Across Models", x = "Model", y = "BIC") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{R}
+mse_df <- data.frame(
+  Model = names(mse_values),
+  MSE = mse_values
+)
+mse_df <- subset(mse_df, Model != "mod0")
+mse_df$Order <- as.numeric(str_extract(mse_df$Model, "\\d+"))
+mse_df <- mse_df[order(mse_df$Order), ]
+mse_df$Model <- factor(mse_df$Model, levels = mse_df$Model)
+
+ggplot(mse_df, aes(x = Model, y = MSE, group = 1)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "MSE Across Models", x = "Model", y = "MSE") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```  
+Both AIC,BIC,MSE suggests natural splines with 3 degrees of freedom is the best choice. 
+
+# Part 7: Best Model for Grade 4 Reading    
+So based on our analysis, the best model we have for grade 4 reading is 
+
+scale(readng_scr_p0) ~ ns(scale(readng_scr_m1),3) + gender + raceth + frl_now 
++ specialed_now + enrfay_school + transferred_out_p0 +chronic_absentee_m1 
++ readng_lan_p0 + (1 | schoolid_nces_enroll_p0)
+
+# Part 8: Extremely Low Math Scores   
+One worth-noting pattern in our data is extremely low math scores for students in grade 6-8. We have lots of students scored 1043, which we can reasonably guess corresponding to raw score 0 in STAAR math test based on past grading schemes (Grading scheme for 2019 was not found online). 
+Here's a histogram show the pattern. 
+Grade 6 math score distribution: 
+```{R}
+data_sampled <- data %>% 
+  filter(schoolid_nces_enroll_p0 %in% schools_sampled)  %>% 
+  select(gradelevel, glmath_scr_p0) %>% 
+  na.omit()
+for(i in 3:8){
+  p <- data_sampled %>%
+    filter(gradelevel == i) %>%
+    ggplot(aes(x = glmath_scr_p0)) +
+    geom_histogram(bins = 100) +
+    labs(
+      title = paste("Grade", i, "math score distribution"),
+      x = "Score",
+      y = "Count"
+    ) +
+    theme_minimal()
+  
+  print(p)
+}
+```
+The unusual high frequency of scores near 1500 for grade 4 and near 1600 for grade 6 students is also worth investigating. 
+Anyway, a more robust way of modeling such math scores is needed, potentially `robustlmm` package in R. But this leaves to future work. 
+
