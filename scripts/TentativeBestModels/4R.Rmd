@@ -1,0 +1,182 @@
+```{R}
+source("~/urps-modelling/scripts/Z_helpers.R")
+
+set.seed(489)
+library(readr)
+library(dplyr)
+library(lme4)
+library(purrr)
+library(ggplot2)
+library(stringr)
+library(splines)
+data <- read_csv("/home/rstudio/TEA_2019.csv")
+df <- create_dataset(data)
+dfs <- clean_dataset(df)
+```
+
+```{r message=FALSE, warning=FALSE}
+candidate_vars_1 <- c("frl_ever",
+                      "lep_ever",
+                      "attend_p0_d1",
+                      "specialed_ever",
+                      "transferred_out_p0",
+                      "enrfay_school",
+                      "chronic_absentee_p0",
+                      "homeless_ever",
+                      "persist_inferred_p0",
+                      "migrant_ever")
+
+fixed_vars_1 <- c("readng_scr_m1",
+                  "gender",
+                  "raceth")
+c_mod_list <- create_candidate_mod_list()
+c_mod_list <- create_candidate_mod(candidate_vars_1, fixed_vars_1, "r", 4, c_mod_list)
+```
+
+```{r}
+model_selection(4, "r",c_mod_list)
+```
+readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_ever +  
+    lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  
+    enrfay_school + chronic_absentee_p0 + homeless_ever
+
+```{r message=FALSE, warning=FALSE}
+fixed_vars_2 <- c("readng_scr_m1",
+                  "gender",
+                  "raceth",
+                  "frl_ever",
+                  "lep_ever",
+                  "attend_p0_d1",
+                  "specialed_ever",
+                  "transferred_out_p0",
+                  "enrfay_school",
+                  "chronic_absentee_p0",
+                  "homeless_ever")
+
+candidate_vars_2 <- c("persist_inferred_m1",
+                      "transferred_out_m1",
+                      "chronic_absentee_m1",
+                      "readng_lan_m1", 
+                      "attend_m1_d1")
+c_mod_list_2 <- create_candidate_mod_list()
+c_mod_list_2 <- create_candidate_mod(candidate_vars_2, fixed_vars_2, "r", 4, c_mod_list_2)
+```
+
+```{r}
+model_selection(4, "r", c_mod_list_2)
+```
+23
+readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_ever +  
+    lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  
+    enrfay_school + chronic_absentee_p0 + homeless_ever + transferred_out_m1 +  
+    chronic_absentee_m1 + readng_lan_m1 + (1 | schoolid_nces_enroll_p0)
+```{R warning=FALSE}
+unscaled <- lmer(readng_scr_p0 ~ readng_scr_m1 + gender + raceth + frl_ever +  
+    lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  
+    enrfay_school + chronic_absentee_p0 + homeless_ever + transferred_out_m1 +  
+    chronic_absentee_m1 + readng_lan_m1 + (1 | schoolid_nces_enroll_p0), 
+                 data = dfs[["df_4_r"]], REML = FALSE)
+
+scaled <- lmer(scale(readng_scr_p0) ~ scale(readng_scr_m1) + gender + raceth + frl_ever +  
+    lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  
+    enrfay_school + chronic_absentee_p0 + homeless_ever + transferred_out_m1 +  
+    chronic_absentee_m1 + readng_lan_m1 + (1 | schoolid_nces_enroll_p0), 
+                 data = dfs[["df_4_r"]], REML = FALSE)
+
+cat("\nThe AIC for unnormalized model is", AIC(unscaled))
+cat("\nThe AIC for normalized model is", AIC(scaled))
+cat("\nThe BIC for unnormalized model is", BIC(unscaled))
+cat("\nThe BIC for normalized model is", BIC(scaled))
+```
+
+```{R}
+splines <- list() 
+splines[['mod0']] <- lmer(scale(readng_scr_p0) ~ scale(readng_scr_m1) + gender + raceth + frl_ever +  
+    lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  
+    enrfay_school + chronic_absentee_p0 + homeless_ever + transferred_out_m1 +  
+    chronic_absentee_m1 + readng_lan_m1 + (1 | schoolid_nces_enroll_p0), 
+                 data = dfs[["df_4_r"]], REML = FALSE)
+for(i in 1:10){
+  splines[[paste('mod', i)]] <- lmer(scale(readng_scr_p0) ~ ns(scale(readng_scr_m1),i) + gender + raceth + frl_ever +  
+    lep_ever + attend_p0_d1 + specialed_ever + transferred_out_p0 +  
+    enrfay_school + chronic_absentee_p0 + homeless_ever + transferred_out_m1 +  
+    chronic_absentee_m1 + readng_lan_m1 + (1 | schoolid_nces_enroll_p0), 
+                 data = dfs[["df_4_r"]], REML = FALSE)
+}
+```
+
+```{R}
+splines_Sum <- list()
+
+for(i in seq_along(splines)) {
+  splines_Sum[[i]] <- list(
+    model = splines[[i]],
+    AIC = AIC(splines[[i]]),
+    BIC = BIC(splines[[i]]),
+    MSE = mean(residuals(splines[[i]])^2)
+  )
+}
+names(splines_Sum) <- names(splines)
+
+aic_values <- sapply(splines_Sum, function(x) x$AIC)
+aic_values
+
+bic_values <- sapply(splines_Sum, function(x) x$BIC)
+bic_values
+
+mse_values <- sapply(splines_Sum, function(x) x$MSE)
+mse_values
+```
+
+```{R}
+aic_df <- data.frame(
+  Model = names(aic_values),
+  AIC = aic_values
+)
+aic_df <- subset(aic_df, Model != "mod0")
+aic_df$Order <- as.numeric(str_extract(aic_df$Model, "\\d+"))
+aic_df <- aic_df[order(aic_df$Order), ]
+aic_df$Model <- factor(aic_df$Model, levels = aic_df$Model)
+
+ggplot(aic_df, aes(x = Model, y = AIC, group = 1)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "AIC Across Models", x = "Model", y = "AIC") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{R}
+bic_df <- data.frame(
+  Model = names(bic_values),
+  BIC = bic_values
+)
+bic_df <- subset(bic_df, Model != "mod0")
+bic_df$Order <- as.numeric(str_extract(bic_df$Model, "\\d+"))
+bic_df <- bic_df[order(bic_df$Order), ]
+bic_df$Model <- factor(bic_df$Model, levels = bic_df$Model)
+ggplot(bic_df, aes(x = Model, y = BIC, group = 1)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "BIC Across Models", x = "Model", y = "BIC") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{R}
+mse_df <- data.frame(
+  Model = names(mse_values),
+  MSE = mse_values
+)
+mse_df <- subset(mse_df, Model != "mod0")
+mse_df$Order <- as.numeric(str_extract(mse_df$Model, "\\d+"))
+mse_df <- mse_df[order(mse_df$Order), ]
+mse_df$Model <- factor(mse_df$Model, levels = mse_df$Model)
+
+ggplot(mse_df, aes(x = Model, y = MSE, group = 1)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "MSE Across Models", x = "Model", y = "MSE") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```  
