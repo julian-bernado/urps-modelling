@@ -102,7 +102,8 @@ zjunjie_start:
 	docker start zjunjie_urps25
 	docker cp ./ zjunjie_urps25:/home/rstudio/urps-modelling
 	docker cp ../../tea/bernado/TEA_2019.csv zjunjie_urps25:/home/rstudio/TEA_2019.csv
-
+	docker cp ../../tea/data/2024_05_24/TX2019_DRV_UMICH.dta zjunjie_urps25:/home/rstudio/TX2019_DRV_UMICH.dta
+	docker cp ../../tea/data/2024_05_24/TX2022_DRV_UMICH.dta zjunjie_urps25:/home/rstudio/TX2022_DRV_UMICH.dta
 
 zjunjie_exit:
 	@echo "Performing cleanup and saving changes for container Junjie..."
